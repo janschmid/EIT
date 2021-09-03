@@ -1,0 +1,17 @@
+# First working example, this is still a bit messy...
+# Don't run the container with docker-compose or docker, use rocker instead (pip install rocker)
+# build with "docker-compose build"
+# run with: rocker --x11 eit_main
+# launch gazebo inside container
+version: "3"
+services:
+  gazebo:
+    image: eit_main:latest
+    build: .
+    environment:
+      - DISPLAY=${DISPLAY}
+    privileged: true
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /home/jan/Documents/Nextcloud/Uni/ExpertsInTeam/Git/src/PX4-Autopilot:/src/PX4-Autopilot/:rw 
+    command: /bin/bash
