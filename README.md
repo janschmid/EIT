@@ -4,7 +4,7 @@
 **For devs that wish to push to the repository ; precommits are necessary, and an overview of how-to along with a styleguide is mentioned below**
 
 ## Precommits: 
-Before a commit is accepted, a precommit is needed which tests the code for the following: Does it compile? Does it build? Does it comply with the given style guide (Google c++ Style Guide https://google.github.io/styleguide/cppguide.html)
+Before a commit is accepted, a precommit is needed which tests the code for the following: Does it compile? Does it build? Does it comply with the given style guide ([Google c++ Style Guide](https://google.github.io/styleguide/cppguide.html) )
 
 
 ### Testing: 
