@@ -1,0 +1,35 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.3.0
+    hooks:
+    -   id: check-yaml
+    -   id: end-of-file-fixer
+    -   id: trailing-whitespace
+-   repo: https://github.com/psf/black
+    rev: 19.3b0
+    hooks:
+    -   id: black
+-   repo: https://github.com/pocc/pre-commit-hooks
+    rev: v1.3.3
+    hooks:
+    -   id: clang-format
+        args: [--style=Google]
+    -   id: clang-tidy
+    -   id: oclint
+    -   id: cppcheck
+    -   id: cpplint
+    # hooks using cpp in docker
+-   repo: https://gitlab.com/daverona/pre-commit/cpp
+    rev: 0.8.0
+    hooks:
+    -   id: docker-clang-format # needs clang-format - download using apt-get
+        args: [--style=Google]
+    -   id: docker-cpplint
+    -   id: docker-cppcheck # needs ccpcheck, download using apt-get install
+    #hooks for docker
+-   repo: https://github.com/IamTheFij/docker-pre-commit
+    rev: v2.0.1
+    hooks:
+    -   id: docker-compose-check # Checks that docker-compose files are valid
+    -   id: hadolint # Runs hadolint Docker image to lint Dockerfiles
+    -   id: hadolint-system # Runs system hadolint to lint Dockerfiles
