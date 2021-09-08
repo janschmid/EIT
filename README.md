@@ -32,6 +32,9 @@ To run the hooks noted with \*, the following needs to be install in the envirom
 '''apt install clang clang-format clang-tidy cppcheck'''
 '''pip install cpplint'''
 
+If git commit doesn't pass the checks, you need to fix it/or if it is fixed by
+one of the scripts, it needs to be restaged for commit before
+a commit can be made again. ½
 ### Testing:
 Every branch, before it is merged to master, will have to go through pre-exisiting tests using googletest.
 If no test is available for your newly added feature, you are write some, [following this guide](https://google.github.io/googletest/primer.html)
