@@ -13,7 +13,6 @@ This tests the files for the following:
     * docker-cpplint - Run `cpplint` against C/C++ header and source files in Docker container
     * docker-cppcheck\* - Run `cppcheck` against C/C++ source files in Docker container
     * docker-compose-check - Checks that docker-compose files are valid
-    *
 * Cpp
     * clang-format\* - Formats C, C++, Objective-C, and Java code [Using Google Style Guide](https://google.github.io/styleguide/cppguide.html)
     * clang-tidy\* - Find warnings/errors in C, C++, and Objective-C code
@@ -33,8 +32,10 @@ To run the hooks noted with \*, the following needs to be install in the envirom
 
 If git commit doesn't pass the checks, you need to fix it/or if it is fixed by
 one of the scripts, it needs to be restaged for commit before
-a commit can be made again. ½
+a commit can be made again.
+
 ### Testing:
-Every branch, before it is merged to master, will have to go through pre-exisiting tests using googletest.
-If no test is available for your newly added feature, you are write some, [following this guide](https://google.github.io/googletest/primer.html)
-(https://github.com/google/googletest)
+Every branch, before it is merged to master, will have to go through
+pre-exisiting tests using googletest.
+If no test is available for your newly added feature, you have to write
+them yourself [following this guide](https://google.github.io/googletest/primer.html)
