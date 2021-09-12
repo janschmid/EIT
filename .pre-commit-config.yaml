@@ -31,5 +31,5 @@ repos:
     rev: v2.0.1
     hooks:
     -   id: docker-compose-check # Checks that docker-compose files are valid
-    -   id: hadolint # Runs hadolint Docker image to lint Dockerfiles
-    -   id: hadolint-system # Runs system hadolint to lint Dockerfiles
+      #    -   id: hadolint # Runs hadolint Docker image to lint Dockerfiles
+      #-   id: hadolint-system # Runs system hadolint to lint Dockerfiles
