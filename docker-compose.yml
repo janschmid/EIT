@@ -3,15 +3,19 @@
 # build with "docker-compose build"
 # run with: rocker --x11 eit_main
 # launch gazebo inside container
+
+# Execute 'xhost +' before running the container
 version: "3"
 services:
   gazebo:
     image: eit_main:latest
-    build: .
+    build:
+      context: .
+      dockerfile: eit_main.Dockerfile
     environment:
-      - DISPLAY=${DISPLAY}
-    privileged: true
+    - HOME=/home/user
+    - USER=user
+    - "DISPLAY"
     volumes:
-      - /tmp/.X11-unix:/tmp/.X11-unix
-      - /home/jan/Documents/Nextcloud/Uni/ExpertsInTeam/Git/src/PX4-Autopilot:/src/PX4-Autopilot/:rw 
-    command: /bin/bash
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    privileged: true
