@@ -33,3 +33,11 @@ If you have issues running gazebo gui in docker, run it instead in headless mode
 - Install gazebo `curl -sSL http://get.gazebosim.org | sh`
 - Create symlink from: eit_playground/models to ~/.gazebo/models
 - Launch gazebo client with `gzclient` and rosnode in container
+
+# Balena
+- Install [Balena CLI](https://github.com/balena-io/balena-cli/releases)
+- Setup local lan connection (share wifi with lan), IPV4 Method: Automatic (DHCP) 
+- Connect Raspberry Pi to Laptop via lan
+- Goto folder EIT
+- Comment out "Cross-build" sections in Raspberry/Dockerfile
+- Run: balena push a1870e9.local
