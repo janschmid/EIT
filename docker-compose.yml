@@ -1,22 +1,21 @@
-# First working example, this is still a bit messy...
-# Don't run the container with docker-compose or docker, use rocker instead (pip install rocker)
-# build with "docker-compose build"
-# run with: rocker --x11 eit_main
-# launch gazebo inside container
-
-# Execute 'xhost +' before running the container
-version: "3"
+version: '2.1'
+# networks: {}
+volumes:
+  resin-data: {}
 services:
-  gazebo:
-    image: eit_main:latest
+  main:
     build:
       context: .
-      dockerfile: eit_main.Dockerfile
-    environment:
-    - HOME=/home/user
-    - USER=user
-    - "DISPLAY"
-    volumes:
-      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      dockerfile: Raspberry/Dockerfile
     privileged: true
+    restart: always
     network_mode: host
+    volumes:
+      - 'resin-data:/data'
+    labels:
+      io.balena.features.kernel-modules: '1'
+      io.balena.features.firmware: '1'
+      io.balena.features.dbus: '1'
+      io.balena.features.supervisor-api: '1'
+      io.balena.features.balena-api: '1'
+

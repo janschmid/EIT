@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- Posix SITL environment launch script -->
+    <!-- launches PX4 SITL, Gazebo environment, and spawns vehicle -->
+    <!-- vehicle pose -->
+    <arg name="x" default="0"/>
+    <arg name="y" default="0"/>
+    <arg name="z" default="0.5"/>
+    <arg name="R" default="0"/>
+    <arg name="P" default="0"/>
+    <arg name="Y" default="0"/>
+
+    <!-- vehicle model and world -->
+    <arg name="est" default="ekf2"/>
+    <arg name="vehicle" default="sdu_drone"/>
+    <env name="PX4_SIM_MODEL" value="$(arg vehicle)" />
+    <env name="PX4_ESTIMATOR" value="$(arg est)" />
+
+    <arg name="ID" default="0"/>
+
+    <arg name="mavlink_udp_port" default="$(eval 14560 + arg('ID'))"/>
+    <arg name="mavlink_tcp_port" default="$(eval 4560 + arg('ID'))"/>
+
+    <arg name="mavlink_lower" default="$(eval 14540 + arg('ID'))"/>
+    <arg name="mavlink_upper" default="$(eval 14580 + arg('ID'))"/>
+
+
+    <!-- UAV0 -->
+    <group ns="$(arg vehicle)_$(arg ID)">
+        <!-- MAVROS and vehicle configs -->
+
+        <!-- to add more UAVs (up to 10):
+        Increase the id
+        Change the name space
+        Set the FCU to default="udp://:14540+id@localhost:14550+id"
+        Set the malink_udp_port to 14560+id) -->
+
+        <arg name="fcu_url" default="udp://:$(arg mavlink_lower)@localhost:$(arg mavlink_upper)"/>
+
+        <!-- PX4 SITL and vehicle spawn -->
+        <include file="$(find eit_playground)/launch/single_vehicle_spawn_sdf.launch">
+            <arg name="x" value="$(arg x)"/>
+            <arg name="y" value="$(arg y)"/>
+            <arg name="z" value="$(arg z)"/>
+            <arg name="R" value="$(arg R)"/>
+            <arg name="P" value="$(arg P)"/>
+            <arg name="Y" value="$(arg Y)"/>
+            <arg name="vehicle" value="$(arg vehicle)"/>
+            <arg name="mavlink_udp_port" value="$(arg mavlink_udp_port)"/>
+            <arg name="mavlink_tcp_port" value="$(arg mavlink_tcp_port)"/>
+            <arg name="ID" value="$(arg ID)"/>
+            <!--
+            <arg name="robotNamespace" value="$(arg vehicle)_$(arg ID)"/>
+          -->
+        </include>
+
+    </group>
+    <!--
+  -->
+</launch>

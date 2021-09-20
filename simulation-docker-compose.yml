@@ -1,0 +1,23 @@
+# First working example, this is still a bit messy...
+# Don't run the container with docker-compose or docker, use rocker instead (pip install rocker)
+# build with "docker-compose build"
+# run with: rocker --x11 eit_main
+# launch gazebo inside container
+
+# Execute 'xhost +' before running the container
+version: "3"
+services:
+  gazebo:
+    image: eit_main:latest
+    build:
+      context: .
+      dockerfile: eit_main.Dockerfile
+    environment:
+    - HOME=/home/user
+    - USER=user
+    - "DISPLAY"
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ./eit_playground:/home/user/eit_ws/src/eit_playground
+    privileged: true
+    network_mode: host
