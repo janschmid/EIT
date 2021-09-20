@@ -2,7 +2,7 @@
 Install QGroundControl
 Setup the UDP port like described here: https://docs.px4.io/master/en/test_and_ci/docker.html#qgroundcontrol
 # Docker-help
-Build and run the container `docker-compose -f simulation-docker-compose.yml build && docker-compose run gazebo bash`
+Build and run the container `docker-compose -f simulation-docker-compose.yml build && docker-compose -f simulation-docker-compose.yml run gazebo bash`
 # EIT playground
 - \<project-name\> is eit-ws
 -  s\<project-name\>: Source the catkin workspace of the project and the Firmware (eit_ws and eit_playground)
