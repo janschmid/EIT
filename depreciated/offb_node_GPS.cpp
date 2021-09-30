@@ -18,23 +18,11 @@ void state_cb(const mavros_msgs::State::ConstPtr& msg){
     current_state = *msg;
 }
 
-double local_pos_x = 0.0;
-double local_pos_y = 0.0;
-void local_pos_cb(geometry_msgs::PoseStamped msg){
-	local_pos_x = msg.pose.position.x;
-	local_pos_y = msg.pose.position.y;
-}
-
-geometry_msgs::PoseStamped waypoint(double xRel, double yRel, double zRel){
-	geometry_msgs::PoseStamped pose;
-	pose.pose.position.x = xRel;
-	pose.pose.position.y = yRel;
-	pose.pose.position.z = zRel;
-	return pose;
-}
-
-std::vector<geometry_msgs::PoseStamped> create_wp_list(){
-	
+double global_pos_x = 0.0;
+double global_pos_y = 0.0;
+void global_pos_cb(geometry_msgs::PoseStamped msg){
+	global_pos_x = msg.latitude;
+	global_pos_y = msg.longitude;
 }
 
 int main(int argc, char **argv)
@@ -44,15 +32,22 @@ int main(int argc, char **argv)
 
     ros::Subscriber state_sub = nh.subscribe<mavros_msgs::State>
             ("mavros/state", 10, state_cb);
-    ros::Publisher local_pos_pub = nh.advertise<geometry_msgs::PoseStamped>
-            ("mavros/setpoint_position/local", 10);
+    //ros::Publisher local_pos_pub = nh.advertise<geometry_msgs::PoseStamped>
+    //        ("mavros/setpoint_position/local", 10);
     ros::ServiceClient arming_client = nh.serviceClient<mavros_msgs::CommandBool>
             ("mavros/cmd/arming");
     ros::ServiceClient set_mode_client = nh.serviceClient<mavros_msgs::SetMode>
             ("mavros/set_mode");
 	
-	//Subscribe to the position topic
-    ros::Subscriber local_pos_sub = nh.subscribe<geometry_msgs::PoseStamped>("mavros/local_position/pose", 1, local_pos_cb);
+	//Subscribe to the global position topic
+	//The number - here 1 - is the amount of messages that we will buffer up - set to 1 so we only have the current position to process
+    // topic "/mavros/global_position/global" is filtered position coordinates. 
+	// topic "/mavros/global_position/raw/fix" is unfiltered
+	ros::Subscriber global_pos_sub = nh.subscribe<geometry_msgs::PoseStamped>("mavros/global_position/raw/fix", 1, global_pos_cb);
+
+	//Publish to the global setpoint topic
+	//The number - here 10 - is the amount of messages that we buffer 
+	ros::Publisher global_pos_pub = nh.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_raw/global",10);
 
     //the setpoint publishing rate MUST be faster than 2Hz
     ros::Rate rate(20.0);
@@ -70,34 +65,31 @@ int main(int argc, char **argv)
 
 	//waypoint array
 	std::vector<geometry_msgs::PoseStamped> waypoints;
-	waypoints.push_back(waypoint(0,0,0));
-	waypoints.push_back(waypoint(10,10,2));
-	waypoints.push_back(waypoint(15,15,4));
-	waypoints.push_back(waypoint(15,-5,4));
-    /*geometry_msgs::PoseStamped pose;
-    pose.pose.position.x = 0;
-    pose.pose.position.y = 0;
-    pose.pose.position.z = 2;
-	waypoints.push_back(pose);
+
+    geometry_msgs::PoseStamped waypoint;
+    waypoint.latitude = 55.0;
+    waypoint.longitude = 8.0;
+    waypoint.altitude = 535.0;
+	waypoints.push_back(waypoint);
+
+    waypoint.latitude = 55.5;
+    waypoint.longitude = 8.3;
+    waypoint.altitude = 535.0;
+	waypoints.push_back(waypoint);
     
-	pose.pose.position.x = 10;
-    pose.pose.position.y = 10;
-    pose.pose.position.z = 2;
-	waypoints.push_back(pose);
+    waypoint.latitude = 56.0;
+    waypoint.longitude = 8.6;
+    waypoint.altitude = 535.0;
+	waypoints.push_back(waypoint);
 
-	pose.pose.position.x = 15;
-    pose.pose.position.y = 15;
-    pose.pose.position.z = 4;
-	waypoints.push_back(pose);
+    waypoint.latitude = 56.5;
+    waypoint.longitude = 8.9;
+    waypoint.altitude = 535.0;
+	waypoints.push_back(waypoint);
 
-	pose.pose.position.x = 15;
-    pose.pose.position.y = -5;
-	pose.pose.position.z = 4;
-	waypoints.push_back(pose);*/
-
-    //send a few setpoints before starting
+	//send a few setpoints before starting
     for(int i = 100; ros::ok() && i > 0; --i){
-        local_pos_pub.publish(waypoints[0]);
+        global_pos_pub.publish(waypoints[0]);
         ros::spinOnce();
         rate.sleep();
     }
@@ -151,12 +143,12 @@ int main(int argc, char **argv)
             }
         }
 		
-		if(std::abs(local_pos_x-waypoints[i].pose.position.x)+std::abs(local_pos_y-waypoints[i].pose.position.y) < R){
+		if(std::abs(global_pos_x-waypoints[i].latitude)+std::abs(global_pos_y-waypoints[i].longitude) < R){
 			i++;
 		}
 		if(i>waypoints.size()-1) i = waypoints.size()-1;
 
-        local_pos_pub.publish(waypoints[i]);
+        global_pos_pub.publish(waypoints[i]);
 
         ros::spinOnce();
         rate.sleep();

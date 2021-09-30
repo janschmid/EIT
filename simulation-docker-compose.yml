@@ -16,7 +16,7 @@ services:
     - HOME=/home/user
     - USER=user
     - "DISPLAY"
-    - PX4_HOME_LAT=55.471650
+    - PX4_HOME_LAT=55.471649
     - PX4_HOME_LON=10.328990
     - PX4_HOME_ALT=0
 

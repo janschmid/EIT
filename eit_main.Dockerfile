@@ -84,3 +84,8 @@ RUN /bin/bash -c "echo \"alias l_offbnode='seit-ws && rosrun eit_playground offb
 RUN sed -i -e 's/~/home\/user/g' /home/user/eit_ws/src/eit_playground/setup_posix.bash
 RUN /bin/bash -c "source /home/user/eit_ws/src/eit_playground/setup_posix.bash"
 RUN /bin/bash -c "cd /home/user/eit_ws/ && source /home/user/eit_ws/devel/setup.sh  && source /home/user/eit_ws/src/eit_playground/setup_gazebo.bash && catkin build"
+RUN apt-get install vim -y
+
+RUN export PX4_HOME_LAT=55.471650
+RUN export PX4_HOME_LON=10.328990
+RUN export PX4_HOME_ALT=0

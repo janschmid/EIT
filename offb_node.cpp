@@ -25,18 +25,6 @@ void local_pos_cb(geometry_msgs::PoseStamped msg){
 	local_pos_y = msg.pose.position.y;
 }
 
-geometry_msgs::PoseStamped waypoint(double xRel, double yRel, double zRel){
-	geometry_msgs::PoseStamped pose;
-	pose.pose.position.x = xRel;
-	pose.pose.position.y = yRel;
-	pose.pose.position.z = zRel;
-	return pose;
-}
-
-std::vector<geometry_msgs::PoseStamped> create_wp_list(){
-	
-}
-
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "offb_node");
@@ -70,11 +58,8 @@ int main(int argc, char **argv)
 
 	//waypoint array
 	std::vector<geometry_msgs::PoseStamped> waypoints;
-	waypoints.push_back(waypoint(0,0,0));
-	waypoints.push_back(waypoint(10,10,2));
-	waypoints.push_back(waypoint(15,15,4));
-	waypoints.push_back(waypoint(15,-5,4));
-    /*geometry_msgs::PoseStamped pose;
+
+    geometry_msgs::PoseStamped pose;
     pose.pose.position.x = 0;
     pose.pose.position.y = 0;
     pose.pose.position.z = 2;
@@ -93,7 +78,7 @@ int main(int argc, char **argv)
 	pose.pose.position.x = 15;
     pose.pose.position.y = -5;
 	pose.pose.position.z = 4;
-	waypoints.push_back(pose);*/
+	waypoints.push_back(pose);
 
     //send a few setpoints before starting
     for(int i = 100; ros::ok() && i > 0; --i){
