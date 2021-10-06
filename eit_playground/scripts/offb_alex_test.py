@@ -55,6 +55,8 @@ class OffboardControl:
         # Subscribers
         self.state_sub = rospy.Subscriber('/mavros/state', State, self.cb_state)
         self.sub_target = rospy.Subscriber('/mavros/offbctrl/target', PoseStamped, self.cb_target)
+        self.sub_pose = rospy.Subscriber('/mavros/local_position/pose', PoseStamped, self.cb_target)
+        
 
         # Services
         self.arming_client = rospy.ServiceProxy('/mavros/cmd/arming', CommandBool)
@@ -85,8 +87,9 @@ class OffboardControl:
         tmp = Empty()
         self.switch2offboard(tmp)
         
+
         self.set_target_xyz(5, 5, 5, 0)
-        
+
         rospy.spin()
 
     """
@@ -99,6 +102,9 @@ class OffboardControl:
 
     def cb_target(self,data):
         self.set_target(data)
+
+    def cb_switch_wp(self,pose):
+        
 
     """
     Services
