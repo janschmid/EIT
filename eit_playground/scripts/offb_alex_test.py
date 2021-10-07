@@ -55,13 +55,21 @@ class OffboardControl:
         # Subscribers
         self.state_sub = rospy.Subscriber('/mavros/state', State, self.cb_state)
         self.sub_target = rospy.Subscriber('/mavros/offbctrl/target', PoseStamped, self.cb_target)
-        self.sub_pose = rospy.Subscriber('/mavros/local_position/pose', PoseStamped, self.cb_target)
+        self.sub_pose = rospy.Subscriber('/mavros/local_position/pose', PoseStamped, self.cb_position)
         
 
         # Services
         self.arming_client = rospy.ServiceProxy('/mavros/cmd/arming', CommandBool)
         self.takeoff_client = rospy.ServiceProxy('/mavros/cmd/takeoff', CommandTOL)
         self.set_mode_client = rospy.ServiceProxy('/mavros/set_mode', SetMode)
+        #self.land_client = rospy.ServiceProxy('/mavros/cmd/land', CommandTOL)
+
+        #self.land_cmd = CommandTOL()
+        #self.land_cmd.min_pitch = 0
+        #self.land_cmd.yaw = 0
+        #self.land_cmd.latitude = 0
+        #self.land_cmd.longitude = 0
+        #self.land_cmd.altitude = 0
 
         ## Create services
         self.setpoint_controller_server()
@@ -72,6 +80,17 @@ class OffboardControl:
         self.target.pose.position.y = 0
         self.target.pose.position.z = 0
 
+        # Init current position variables
+
+        self.positionX = 0.0
+        self.positionY = 0.0
+        self.positionZ = 0.0
+
+        self.wp_list = [[0,0,5], [5, 5, 5], [0, 0, 2]]
+        self.wp_index = 0
+
+        self.wp_radius = 0.5
+
         self.last_request = rospy.get_rostime()
         self.state = "INIT"
 
@@ -79,6 +98,11 @@ class OffboardControl:
 
         self.t_run = threading.Thread(target=self.navigate)
         self.t_run.start()
+
+        self.set_target_xyz(0,0,0, 0)
+        
+        self.wp_run = threading.Thread(target=self.check_wp)
+        self.wp_run.start()
         print(">> SetPoint controller is running (Thread)")
 
         # Spin until the node is stopped
@@ -86,10 +110,7 @@ class OffboardControl:
         time.sleep(5)
         tmp = Empty()
         self.switch2offboard(tmp)
-        
-
-        self.set_target_xyz(5, 5, 5, 0)
-
+    
         rospy.spin()
 
     """
@@ -103,8 +124,10 @@ class OffboardControl:
     def cb_target(self,data):
         self.set_target(data)
 
-    def cb_switch_wp(self,pose):
-        
+    def cb_position(self, ps):
+        self.positionX = ps.pose.position.x
+        self.positionY = ps.pose.position.y
+        self.positionZ = ps.pose.position.z      
 
     """
     Services
@@ -135,6 +158,19 @@ class OffboardControl:
     Target position
     * set_target:
     """
+
+    def check_wp(self):
+        while not rospy.is_shutdown():
+            if(abs(self.positionX - self.target.pose.position.x) < self.wp_radius and abs(self.positionY - self.target.pose.position.y) < self.wp_radius and abs(self.positionZ - self.target.pose.position.z) < self.wp_radius):
+                if self.wp_index < len(self.wp_list):
+                    print("reached waypoint: ", self.wp_list[self.wp_index])
+                    self.set_target_xyz(self.wp_list[self.wp_index][0],self.wp_list[self.wp_index][1], self.wp_list[self.wp_index][2], 0)
+                    self.wp_index += 1
+                else:
+                    self.set_mode_client(base_mode=0, custom_mode="AUTO.LAND")
+                    #self.land_client.call(self.land_cmd.min_pitch, self.land_cmd.yaw, self.land_cmd.latitude, self.land_cmd.longitude, self.land_cmd.altitude)
+            self.rate.sleep()
+
     def set_target(self, data):
         self.target = data
 
