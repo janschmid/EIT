@@ -89,3 +89,6 @@ RUN apt-get install vim -y
 RUN export PX4_HOME_LAT=55.471650
 RUN export PX4_HOME_LON=10.328990
 RUN export PX4_HOME_ALT=0
+
+RUN apt update && apt-get install ros-noetic-rqt -y
+
