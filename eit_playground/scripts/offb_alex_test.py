@@ -91,6 +91,7 @@ class OffboardControl:
 
         self.wp_radius = 0.2
 
+
         self.last_request = rospy.get_rostime()
         self.state = "INIT"
 
