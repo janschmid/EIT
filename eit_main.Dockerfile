@@ -92,3 +92,5 @@ RUN export PX4_HOME_ALT=0
 
 RUN apt update && apt-get install ros-noetic-rqt -y
 
+RUN apt update && apt-get install python3-opencv -y
+

@@ -86,7 +86,10 @@ class OffboardControl:
         self.positionY = 0.0
         self.positionZ = 0.0
 
-        self.wp_list = [[0,0,2], [2, 0, 2], [0, 0, 2]]
+        # Set to false when testing for real. Deactivates auto arming. 
+        self.sim = True
+
+        self.wp_list = [[0, 0, 5], [1.5, 0, 2], [0, 0, 2]]
         self.wp_index = 0
 
         self.wp_radius = 0.2
@@ -218,7 +221,8 @@ class OffboardControl:
         while not self.current_state.armed:
             now = rospy.get_rostime()
             if(now - last_request > rospy.Duration(5.)):
-               #self.arming_client(True)
+               if self.sim: 
+                    self.arming_client(True)
                last_request = now
 
         return {}
