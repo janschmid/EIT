@@ -89,7 +89,7 @@ class OffboardControl:
         # Set to false when testing for real. Deactivates auto arming. 
         self.sim = True
 
-        self.wp_list = [[0, 0, 5], [1.5, 0, 2], [0, 0, 2]]
+        self.wp_list = [[0, 0, 4], [0, 0, 1], [3, 0, 4], [-1, 0, 0.5], [0, 3, 4], [0, -1, 0.5]]
         self.wp_index = 0
 
         self.wp_radius = 0.2

@@ -104,23 +104,24 @@ class ArucoMarker():
 
     def print_distance_to_aruco_marker(self, frame, markerLength):
         import sys
-        arucoMarkerPoseBaseDir = path.join(path.dirname(path.realpath(__file__)), "arucoMarkerPose")
+        arucoMarkerPoseBaseDir = path.join(path.dirname(path.realpath(__file__)), ".")
         sys.path.insert(0, arucoMarkerPoseBaseDir)
-        matrixCoeff = np.load(path.join(arucoMarkerPoseBaseDir, "calibration_matrix.npy"))
-        disCoeff = np.load(path.join(arucoMarkerPoseBaseDir, "distortion_coefficients.npy"))
+        matrixCoeff = np.load(path.join(arucoMarkerPoseBaseDir, "calibration_matrix_simulation.npy"))
+        disCoeff = np.load(path.join(arucoMarkerPoseBaseDir, "distortion_coefficients_simulation.npy"))
         frame, rotationVector, translationVector, ids = ArucoMarker.pose_esitmation(frame, self.aruco_dict_type, matrixCoeff, disCoeff, markerLength)
         for i in range(len(translationVector)):
             print("Distance to marker {0}: x: {1:.2f}, y: {2:.2f}, z: {3:.2f} ".format(ids[i], 
             translationVector[i][0][0][0],
             translationVector[i][0][0][1],
             translationVector[i][0][0][2]))
-        return frame
+        return frame, rotationVector, translationVector, ids
 
 
-    def tutorial_03_aruco_marker_pose_estimation(self):
+    def tutorial_03_aruco_marker_pose_estimation(self, frame, markerLength):
 
-        frame = cv2.imread(path.join(self.test_image_folder_path, "arucoMarker01.png"))
-        self.print_distance_to_aruco_marker(frame)
+        ff = cv2.imread(path.join(self.test_image_folder_path, "arucoMarker01.png"))
+        frame, rotationVector, translationVector, ids = self.print_distance_to_aruco_marker(frame, markerLength)
+        return frame, rotationVector, translationVector, ids
 
     def tutorial_03_aruco_marker_pose_estimation_camera_feed(self):
         import time
@@ -144,10 +145,10 @@ class ArucoMarker():
         cv2.destroyAllWindows()
 
 
-if __name__ == "__main__":
-    arucoMarker = ArucoMarker()
+#if __name__ == "__main__":
+ #   arucoMarker = ArucoMarker()
     # arucoMarker.tutorial_01_create_and_read_marker()
     # arucoMarker.tutorial_02_estimate_position()
     # arucoMarker.tutorial_03_aruco_marker_pose_estimation()
-    arucoMarker.tutorial_03_aruco_marker_pose_estimation_camera_feed()
+ #   arucoMarker.tutorial_03_aruco_marker_pose_estimation_camera_feed()
 

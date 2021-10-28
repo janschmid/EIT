@@ -56,11 +56,11 @@ def calibrate(dirpath, square_size, width=9, height=6, visualize=False):
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument("-d", "--dir", default="/home/jan/Desktop/EIT-DAS/eit_playground/testImages/webcam", help="Path to folder containing checkerboard images for calibration")
-    ap.add_argument("-w", "--width", type=int, help="Width of checkerboard (default=9)", default=8)
-    ap.add_argument("-t", "--height", type=int, help="Height of checkerboard (default=6)", default=6)
+    ap.add_argument("-d", "--dir", default="/home/user/eit_ws/src/eit_playground/testImages/sim_calibration_images", help="Path to folder containing checkerboard images for calibration")
+    ap.add_argument("-w", "--width", type=int, help="Width of checkerboard (default=9)", default=9)
+    ap.add_argument("-t", "--height", type=int, help="Height of checkerboard (default=6)", default=5)
     ap.add_argument("-s", "--square_size", type=float, default=0.03, help="Length of one edge (in metres)")
-    ap.add_argument("-v", "--visualize", type=str, default="False", help="To visualize each checkerboard image")
+    ap.add_argument("-v", "--visualize", type=str, default="True", help="To visualize each checkerboard image")
     args = vars(ap.parse_args())
     
     dirpath = args['dir']
@@ -79,5 +79,5 @@ if __name__ == '__main__':
     print(dist)
     import os.path as path
     folderPath = path.join(path.dirname(path.realpath(__file__)))
-    np.save(path.join(folderPath, "calibration_matrix"), mtx)
-    np.save(path.join(folderPath, "distortion_coefficients"), dist)
+    np.save(path.join(folderPath, "calibration_matrix_simulation"), mtx)
+    np.save(path.join(folderPath, "distortion_coefficients_simulation"), dist)
