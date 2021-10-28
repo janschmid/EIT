@@ -120,7 +120,7 @@ class ArucoMarker():
     def tutorial_03_aruco_marker_pose_estimation(self):
 
         frame = cv2.imread(path.join(self.test_image_folder_path, "arucoMarker01.png"))
-        self.print_distance_to_aruco_marker(frame)
+        self.print_distance_to_aruco_marker(frame, 0.1)
 
     def tutorial_03_aruco_marker_pose_estimation_camera_feed(self):
         import time
@@ -148,6 +148,6 @@ if __name__ == "__main__":
     arucoMarker = ArucoMarker()
     # arucoMarker.tutorial_01_create_and_read_marker()
     # arucoMarker.tutorial_02_estimate_position()
-    # arucoMarker.tutorial_03_aruco_marker_pose_estimation()
-    arucoMarker.tutorial_03_aruco_marker_pose_estimation_camera_feed()
+    arucoMarker.tutorial_03_aruco_marker_pose_estimation()
+    # arucoMarker.tutorial_03_aruco_marker_pose_estimation_camera_feed()
 

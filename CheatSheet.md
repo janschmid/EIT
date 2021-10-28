@@ -41,3 +41,6 @@ If you have issues running gazebo gui in docker, run it instead in headless mode
 - Goto folder EIT
 - Comment out "Cross-build" sections in Raspberry/Dockerfile
 - Run: balena push a1870e9.local
+
+# Raspberry pi
+- Auto connect to hidden network: https://blog.khmersite.net/2020/12/auto-connect-to-hidden-wifi-with-networkmanger/
