@@ -47,7 +47,7 @@ class ArucoMarker():
         plt.legend()
         plt.show()
     
-    def  pose_esitmation(frame, aruco_dict_type, matrix_coefficients, distortion_coefficients):
+    def  pose_esitmation(frame, aruco_dict_type, matrix_coefficients, distortion_coefficients, markerLength):
         '''
         frame - Frame from the video stream
         matrix_coefficients - Intrinsic matrix of the calibrated camera
@@ -71,7 +71,7 @@ class ArucoMarker():
         if len(corners) > 0:
             for i in range(0, len(ids)):
                 # Estimate pose of each marker and return the values rvec and tvec---(different from those of camera coefficients)
-                rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(corners[i], 0.02, matrix_coefficients,
+                rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(corners[i], markerLength, matrix_coefficients,
                                                                         distortion_coefficients)
                 rotation.append(rvec)
                 translation.append(tvec)
@@ -102,13 +102,13 @@ class ArucoMarker():
         pose = cv2.aruco.estimatePoseSingleMarkers(corners,marker_length,camMat,distCoeffs)  
         self.visualize_results(frame_markers, corners, ids)
 
-    def print_distance_to_aruco_marker(self, frame):
+    def print_distance_to_aruco_marker(self, frame, markerLength):
         import sys
         arucoMarkerPoseBaseDir = path.join(path.dirname(path.realpath(__file__)), "arucoMarkerPose")
         sys.path.insert(0, arucoMarkerPoseBaseDir)
         matrixCoeff = np.load(path.join(arucoMarkerPoseBaseDir, "calibration_matrix.npy"))
         disCoeff = np.load(path.join(arucoMarkerPoseBaseDir, "distortion_coefficients.npy"))
-        frame, rotationVector, translationVector, ids = ArucoMarker.pose_esitmation(frame, self.aruco_dict_type, matrixCoeff, disCoeff)
+        frame, rotationVector, translationVector, ids = ArucoMarker.pose_esitmation(frame, self.aruco_dict_type, matrixCoeff, disCoeff, markerLength)
         for i in range(len(translationVector)):
             print("Distance to marker {0}: x: {1:.2f}, y: {2:.2f}, z: {3:.2f} ".format(ids[i], 
             translationVector[i][0][0][0],
@@ -133,7 +133,7 @@ class ArucoMarker():
             if not ret:
                 break
             
-            output = self.print_distance_to_aruco_marker(frame)
+            output = self.print_distance_to_aruco_marker(frame, 0.1)
             cv2.imshow('Estimated Pose', output)
 
             key = cv2.waitKey(1) & 0xFF
@@ -148,6 +148,6 @@ if __name__ == "__main__":
     arucoMarker = ArucoMarker()
     # arucoMarker.tutorial_01_create_and_read_marker()
     # arucoMarker.tutorial_02_estimate_position()
-    arucoMarker.tutorial_03_aruco_marker_pose_estimation()
-    # arucoMarker.tutorial_03_aruco_marker_pose_estimation_camera_feed()
+    # arucoMarker.tutorial_03_aruco_marker_pose_estimation()
+    arucoMarker.tutorial_03_aruco_marker_pose_estimation_camera_feed()
 
