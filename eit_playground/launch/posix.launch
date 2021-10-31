@@ -1,7 +1,5 @@
 <?xml version="1.0"?>
 <launch>
-    <arg name="SIMULATION" default="$(optenv ROS_SIMULATION true)"/>"
-    <!-- <param arg="SIMULATION" type="string" value="$(optenv ROS_SIMULATION true)"/> -->
     <!-- Posix SITL environment launch script -->
     <!-- launches PX4 SITL, Gazebo environment, and spawns vehicle -->
     <!-- vehicle pose -->
@@ -47,8 +45,4 @@
     </include>
     <!-- gazebo model -->
     <node name="$(anon vehicle_spawn)" pkg="gazebo_ros" type="spawn_model" output="screen" args="-sdf -file $(arg sdf) -model $(arg vehicle) -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/>
-
-
-    <!-- User stuff -->
-    <node name="video_publisher" pkg="eit_playground" type="video_publisher.py" if="$(eval arg('SIMULATION') == false)"/>
 </launch>

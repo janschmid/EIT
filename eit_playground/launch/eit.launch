@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<!-- Main launch file for EIT project - Quick connector -->
+<launch>
+    <!-- <param arg="SIMULATION" type="string" value="$(optenv ROS_SIMULATION true)"/> -->
+    <arg name="SIMULATION" default="$(optenv ROS_SIMULATION true)"/>"
+    
+    <node name="video_publisher" pkg="eit_playground" type="video_publisher.py" if="$(eval arg('SIMULATION') == false)"/>
+</launch>
