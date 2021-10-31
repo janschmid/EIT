@@ -12,6 +12,7 @@ services:
     network_mode: host
     volumes:
       - 'resin-data:/data'
+      - /dev/video0:/dev/video0 
     labels:
       io.balena.features.kernel-modules: '1'
       io.balena.features.firmware: '1'

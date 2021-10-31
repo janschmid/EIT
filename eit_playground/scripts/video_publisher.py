@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import rospy # Python library for ROS
 from sensor_msgs.msg import Image # Image is the message type
 from cv_bridge import CvBridge
@@ -8,6 +9,7 @@ class VideoPublisher:
     bridge = None
     rate = None
     def __init__(self):
+        rospy.loginfo("Start initializing video pubilsher...")
         self.video_pub = rospy.Publisher('mono_cam/image_raw', Image, queue_size=10)
         rospy.init_node("video_publisher")
         self.rate = rospy.Rate(10) #10 hz
@@ -28,6 +30,8 @@ class VideoPublisher:
             if(ret == True):
                 rospy.loginfo("Publish video frame...")
                 self.video_pub.publish(self.bridge.cv2_to_imgmsg(frame))
+            else:
+                rospy.loginfo("Could not access /dev/video0")
         # write frame to file
         cv2.imwrite('image.jpg', frame)
         # release camera
