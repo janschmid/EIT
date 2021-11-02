@@ -12,7 +12,7 @@ Build and run the container `docker-compose -f simulation-docker-compose.yml bui
 ## Launch
 Px4 SITL simulation environment, keep in mind to run seit-ws in advanced 
 - l_eitpg or headless with lh_eigpg
-    - `seit-ws && roslaunch eit_playground posix.launch vehicle:=sdu_drone_mono_cam_downward`, vehicle is optional
+    - `seit-ws && roslaunch eit_playground posix.launch vehicle:=sdu_drone_mono_cam_downward env:=aruco_test_3`, vehicle is optional
 - l_mavros
     - `seit-ws && roslaunch mavros px4.launch fcu_url:="udp://:14540@127.0.0.1:14557"`
 - l_offbnode
