@@ -37,6 +37,7 @@ void cam_pos_cb(geometry_msgs::PoseStamped msg){
 	camPosX = msg.pose.position.x;
 	camPosY = msg.pose.position.y;
 	camPosZ = msg.pose.position.z;
+	mission = false;
 }
 // End callbacks
 
@@ -144,9 +145,13 @@ void altitudeControlThread(double t, double zStart, double zEnd){
 			zLanding = zNow;	//I know I know this is not necessary...
 			startTime = clock();
 			std::cout << "landing\n";
-			if(sqrt((zEnd-zNow)*(zEnd-zNow)) < 0.05){
+			if(sqrt((zEnd-zNow)*(zEnd-zNow)) < 0.01){
 				//Let thread end when landing occurs
 				std::cout << "End landing\n";
+				running = false;
+				break;
+			}
+			if(zLanding < 0.01){
 				running = false;
 				break;
 			}
@@ -184,7 +189,7 @@ int main(int argc, char **argv){
 	//Variables
 	int i = 0;
 	double R = 0.3;			//30cm radius
-	double landingR = 0.01; //1cm radius
+	double landingR = 0.3; //1cm radius
 	//waypoint array
 	std::vector<geometry_msgs::PoseStamped> waypoints;
 	waypoints.push_back(waypoint(0,0,2));
@@ -254,15 +259,18 @@ int main(int argc, char **argv){
         	local_pos_pub.publish(waypoints[i]);
 		// Run guided landing with spline if marker is seen. 
 		}else{
-			targetWaypoint = waypoint(localPosX+camPosX, localPosY+camPosY, localPosZ);
-			if(std::abs(camPosX+camPosY) < landingR){
+			targetWaypoint = waypoint(localPosX+camPosX, localPosY-camPosY, localPosZ);
+
+			std::cout << camPosX << "\n";
+			std::cout << localPosX << "\n";
+			/*if(std::abs(camPosX+camPosY) < landingR){
 				if(startLanding == true){
 					landingThread = std::thread(altitudeControlThread, 10.0, localPosZ, 0.0);
 					startLanding = false;
 				}
 				std::cout << zLanding << "\n";
 				targetWaypoint.pose.position.z = zLanding;
-			}	
+			}*/	
 			local_pos_pub.publish(targetWaypoint);
 		}
         ros::spinOnce();

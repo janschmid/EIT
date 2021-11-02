@@ -44,6 +44,10 @@ add_executable(offb_node src/offb_node.cpp)
 target_link_libraries(offb_node ${catkin_LIBRARIES})
 add_dependencies(offb_node offb_node_cpp)
 
+add_executable(offb_node_guidance src/offb_node_guidance.cpp)
+target_link_libraries(offb_node_guidance ${catkin_LIBRARIES})
+add_dependencies(offb_node_guidance offb_node_guidance_cpp)
+
 #############
 ## Install ##
 #############

@@ -51,7 +51,7 @@ class ArucoPoseEstimatorNode:
         self.frame = 0
         self.rotationVector = 0
         self.translationVector = 0
-        self.ids = 0
+        #self.ids = 
 
         self.t_show_image = threading.Thread(target=self.show_image)
         self.t_show_image.start()
@@ -71,7 +71,8 @@ class ArucoPoseEstimatorNode:
         while not rospy.is_shutdown():
             self.frame, self.rotationVector, self.translationVector, self.ids = self.arucoMarker.tutorial_03_aruco_marker_pose_estimation(self.current_image.astype('uint8'), self.markerLength)
             #for x in range(len(self.ids)):
-            if self.ids: 
+            #print(self.ids)
+            if self.ids is not None: 
                 #print(self.translationVector[0][0][0][0])
                 q = quaternion_from_euler(self.rotationVector[0][0][0][0], self.rotationVector[0][0][0][1], self.rotationVector[0][0][0][2])
                 print(q)
