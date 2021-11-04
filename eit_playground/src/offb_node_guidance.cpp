@@ -192,11 +192,10 @@ int main(int argc, char **argv){
 	double landingR = 0.3; //1cm radius
 	//waypoint array
 	std::vector<geometry_msgs::PoseStamped> waypoints;
-	waypoints.push_back(waypoint(0,0,2));
-	waypoints.push_back(waypoint(1,1,2));
-	waypoints.push_back(waypoint(1.5,1.5,1.5));
-	waypoints.push_back(waypoint(1,2,2));
-	waypoints.push_back(waypoint(1,2,2));
+	waypoints.push_back(waypoint(2,2,2));
+	waypoints.push_back(waypoint(2,-2,2));
+	waypoints.push_back(waypoint(0,0,4));
+
 
     //send a few setpoints before starting
     for(int i = 100; ros::ok() && i > 0; --i){
@@ -259,10 +258,12 @@ int main(int argc, char **argv){
         	local_pos_pub.publish(waypoints[i]);
 		// Run guided landing with spline if marker is seen. 
 		}else{
-			targetWaypoint = waypoint(localPosX+camPosX, localPosY-camPosY, localPosZ);
-
-			std::cout << camPosX << "\n";
-			std::cout << localPosX << "\n";
+			
+			targetWaypoint = waypoint(localPosY+camPosY, localPosX-camPosX, 1);
+			
+			std::cout << "--\n aruco: " << camPosX << "\n";
+			std::cout << "drone: " << localPosX << "\n";
+			std::cout << "target: " << targetWaypoint << "\n---";
 			/*if(std::abs(camPosX+camPosY) < landingR){
 				if(startLanding == true){
 					landingThread = std::thread(altitudeControlThread, 10.0, localPosZ, 0.0);

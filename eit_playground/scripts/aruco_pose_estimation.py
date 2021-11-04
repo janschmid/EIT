@@ -82,7 +82,7 @@ class ArucoPoseEstimatorNode:
             if self.ids is not None: 
                 #print(self.translationVector[0][0][0][0])
                 q = quaternion_from_euler(self.rotationVector[0][0][0][0], self.rotationVector[0][0][0][1], self.rotationVector[0][0][0][2])
-                print(q)
+                #print(q)
                 self.aruco_pose_msg.header.frame_id = "aruco_marker"
                 self.aruco_pose_msg.header.stamp = rospy.Time.now()
                 self.aruco_pose_msg.pose.position.x = self.translationVector[0][0][0][0]
