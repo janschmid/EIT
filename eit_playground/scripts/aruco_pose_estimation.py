@@ -53,8 +53,8 @@ class ArucoPoseEstimatorNode:
         self.translationVector = 0
         #self.ids = 
 
-        # self.t_show_image = threading.Thread(target=self.show_image)
-        # self.t_show_image.start()
+        self.t_show_image = threading.Thread(target=self.show_image)
+        self.t_show_image.start()
 
         self.arucoMarker = ArucoMarker()
 
@@ -86,6 +86,11 @@ class ArucoPoseEstimatorNode:
                 self.aruco_pose_msg.pose.orientation.z = q[2]
                 self.aruco_pose_msg.pose.orientation.w = q[3]
 
+                self.aruco_pos_pub.publish(self.aruco_pose_msg)
+            else:
+                self.aruco_pose_msg.pose.position.x = 0.0
+                self.aruco_pose_msg.pose.position.y = 0.0
+                self.aruco_pose_msg.pose.position.z = 0.0 
                 self.aruco_pos_pub.publish(self.aruco_pose_msg)
 
     def show_image(self):

@@ -98,7 +98,7 @@ double getZ(double t, double a[4]){
 	return (1*a[0]+t*a[1]+t*t*a[2]+t*t*t*a[3]);
 }
 
-void altitudeControlThread(double t, double zStart, double zEnd){
+void altitudeControlThread(double t, double zStart, double zEnd, ros::ServiceClient sm){
 	double B[4][4] = {{1,0,0,0},{0,1,0,0},{1,t,t*t,t*t*t},{0,1,2*t,3*t*t}};
 	double BA11 = B[1][1]*B[2][2]*B[3][3]+B[1][2]*B[2][3]*B[3][1]+B[1][3]*B[2][1]*B[3][2] -B[1][3]*B[2][2]*B[3][1]-B[1][2]*B[2][1]*B[3][3]-B[1][1]*B[2][3]*B[3][2];
 	double BA12 = -B[0][1]*B[2][2]*B[3][3]-B[0][2]*B[2][3]*B[3][1]-B[0][3]*B[2][1]*B[3][2] +B[0][3]*B[2][2]*B[3][1]+B[0][2]*B[2][1]*B[3][3]+B[0][1]*B[2][3]*B[3][2];
@@ -135,7 +135,10 @@ void altitudeControlThread(double t, double zStart, double zEnd){
 			alpha[i] += pInvB[i][j]*initVal[j];
 		}
 	}
-	double zNow = 0;
+    // AUTO.LAND mode
+    mavros_msgs::SetMode land_set_mode;
+    land_set_mode.request.custom_mode = "AUTO.LAND";
+	double zNow = zStart;
 	double timer = 0;
 	clock_t startTime = clock();	//Start timer
 	while(running){
@@ -149,10 +152,13 @@ void altitudeControlThread(double t, double zStart, double zEnd){
 				//Let thread end when landing occurs
 				std::cout << "End landing\n";
 				running = false;
+				//sm.call(land_set_mode);
 				break;
 			}
 			if(zLanding < 0.01){
+				std::cout << "End landing\n";
 				running = false;
+				//sm.call(land_set_mode);
 				break;
 			}
 		}
@@ -250,6 +256,7 @@ int main(int argc, char **argv){
 			if(i>waypoints.size()-1){
 				i = waypoints.size()-1;
 				mission = false;
+				zLanding = localPosZ;
 				continue;
 				//if(set_mode_client.call(land_set_mode) && land_set_mode.response.mode_sent){
 				//	ROS_INFO("AUTO.LAND enabled");
@@ -259,20 +266,22 @@ int main(int argc, char **argv){
         	local_pos_pub.publish(waypoints[i]);
 		// Run guided landing with spline if marker is seen. 
 		}else{
-			targetWaypoint = waypoint(localPosX+camPosX, localPosY-camPosY, localPosZ);
-
-			std::cout << camPosX << "\n";
-			std::cout << localPosX << "\n";
-			/*if(std::abs(camPosX+camPosY) < landingR){
+			targetWaypoint = waypoint(localPosX+camPosX*-1, localPosY+camPosY*-1, localPosZ);
+			if(std::abs(camPosX+camPosY) < landingR){
 				if(startLanding == true){
-					landingThread = std::thread(altitudeControlThread, 10.0, localPosZ, 0.0);
+					landingThread = std::thread(altitudeControlThread, 10.0, localPosZ, 0.0, set_mode_client);
 					startLanding = false;
 				}
-				std::cout << zLanding << "\n";
+				//std::cout << zLanding << "\n";
+				//std::cout << localPosZ << "\n";
 				targetWaypoint.pose.position.z = zLanding;
-			}*/	
+			}	
 			local_pos_pub.publish(targetWaypoint);
 		}
+		//if(running == false){
+			//set_mode_client.call(land_set_mode);
+			//break;
+		//}
         ros::spinOnce();
         rate.sleep();
     }
