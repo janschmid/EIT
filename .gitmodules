@@ -4,3 +4,4 @@
 [submodule "eit_playground/models/aruco_gazebo"]
 	path = eit_playground/models/aruco_gazebo
 	url = https://github.com/joselusl/aruco_gazebo
+

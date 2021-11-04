@@ -53,8 +53,8 @@ class ArucoPoseEstimatorNode:
         self.translationVector = 0
         #self.ids = 
 
-        self.t_show_image = threading.Thread(target=self.show_image)
-        self.t_show_image.start()
+        # self.t_show_image = threading.Thread(target=self.show_image)
+        # self.t_show_image.start()
 
         self.arucoMarker = ArucoMarker()
 

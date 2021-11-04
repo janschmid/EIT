@@ -33,7 +33,7 @@ class VideoPublisher:
             else:
                 rospy.loginfo("Could not access /dev/video0")
         # write frame to file
-        cv2.imwrite('image.jpg', frame)
+        # cv2.imwrite('image.jpg', frame)
         # release camera
         cap.release()
 
