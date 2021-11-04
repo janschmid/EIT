@@ -5,4 +5,6 @@
     <arg name="SIMULATION" default="$(optenv ROS_SIMULATION true)"/>"
     
     <node name="video_publisher" pkg="eit_playground" type="video_publisher.py" if="$(eval arg('SIMULATION') == false)"/>
+    <node name="aruco_pose_estimation" pkg="eit_playground" type="aruco_pose_estimation.py"/>
+    <node name="offb_node_guidance" pkg="eit_playground" type="offb_node_guidance"/>
 </launch>
