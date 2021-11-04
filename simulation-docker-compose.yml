@@ -22,6 +22,6 @@ services:
 
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
-      - ./eit_playground:/home/user/eit_ws/src/eit_playground
+      - .:/home/user/eit_ws/src
     privileged: true
     network_mode: host
