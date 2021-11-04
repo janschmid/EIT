@@ -1,3 +1,6 @@
 [submodule "eit_playground/scripts/arucoMarkerPose"]
 	path = eit_playground/scripts/arucoMarkerPose
 	url = git@github.com:GSNCodes/ArUCo-Markers-Pose-Estimation-Generation-Python.git
+[submodule "eit_playground/models/aruco_gazebo"]
+	path = eit_playground/models/aruco_gazebo
+	url = https://github.com/joselusl/aruco_gazebo
