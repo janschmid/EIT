@@ -24,12 +24,11 @@ class VideoPublisher:
         # set dimensions
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
-
+        rospy.loginfo("Start trying publish video feed...")
         while not rospy.is_shutdown():
             # take frame
             ret, frame = cap.read()
             if(ret == True):
-                rospy.loginfo("Publish video frame...")
                 self.video_pub.publish(self.bridge.cv2_to_imgmsg(frame))
             else:
                 rospy.loginfo("Could not access /dev/video0")
