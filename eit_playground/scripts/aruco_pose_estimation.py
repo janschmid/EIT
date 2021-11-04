@@ -51,6 +51,12 @@ class ArucoPoseEstimatorNode:
         self.frame = 0
         self.rotationVector = 0
         self.translationVector = 0
+        
+        if(rospy.get_param("SIMULATION")==True):
+            self.markerPostfixName = "simulation"
+        else:
+            self.markerPostfixName = "piCam"
+        rospy.loginfo("Using {0} calibration".format(self.markerPostfixName))
         #self.ids = 
 
         # self.t_show_image = threading.Thread(target=self.show_image)
@@ -69,7 +75,8 @@ class ArucoPoseEstimatorNode:
 
     def estimate_pose(self):
         while not rospy.is_shutdown():
-            self.frame, self.rotationVector, self.translationVector, self.ids = self.arucoMarker.tutorial_03_aruco_marker_pose_estimation(self.current_image.astype('uint8'), self.markerLength)
+            self.frame, self.rotationVector, self.translationVector, self.ids = self.arucoMarker.tutorial_03_aruco_marker_pose_estimation(
+                self.current_image.astype('uint8'), self.markerLength, self.markerPostfixName)
             #for x in range(len(self.ids)):
             #print(self.ids)
             if self.ids is not None: 

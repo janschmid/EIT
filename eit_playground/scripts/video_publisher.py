@@ -3,6 +3,7 @@ import rospy # Python library for ROS
 from sensor_msgs.msg import Image # Image is the message type
 from cv_bridge import CvBridge
 import cv2
+import time
 
 class VideoPublisher:
     vid_pub = None
@@ -32,6 +33,7 @@ class VideoPublisher:
                 self.video_pub.publish(self.bridge.cv2_to_imgmsg(frame))
             else:
                 rospy.loginfo("Could not access /dev/video0")
+                time.sleep(5)
         # write frame to file
         # cv2.imwrite('image.jpg', frame)
         # release camera
