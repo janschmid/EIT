@@ -39,9 +39,6 @@ class ArucoPoseEstimatorNode:
 
         self.bridge = CvBridge()
 
-        # set to the size of the real marker 
-        self.markerLength = 0.1
-
         self.aruco_pose_msg = PoseStamped()
         self.aruco_pose_msg.pose.position.x = 0
         self.aruco_pose_msg.pose.position.y = 0
@@ -54,9 +51,12 @@ class ArucoPoseEstimatorNode:
         
         if(rospy.get_param("SIMULATION")==True):
             self.markerPostfixName = "simulation"
+            self.markerLength=0.1
         else:
             self.markerPostfixName = "piCam"
-        rospy.loginfo("Using {0} calibration".format(self.markerPostfixName))
+            # set to the size of the real marker 
+            self.markerLength = 0.0495
+        rospy.loginfo("Using {0} calibration, marker length is : {1}".format(self.markerPostfixName, self.markerLength))
         #self.ids = 
 
         self.t_show_image = threading.Thread(target=self.show_image)
