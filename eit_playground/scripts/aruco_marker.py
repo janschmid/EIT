@@ -102,12 +102,12 @@ class ArucoMarker():
         pose = cv2.aruco.estimatePoseSingleMarkers(corners,marker_length,camMat,distCoeffs)  
         self.visualize_results(frame_markers, corners, ids)
 
-    def print_distance_to_aruco_marker(self, frame, markerLength):
+    def print_distance_to_aruco_marker(self, frame, markerLength, markerPostfixName):
         import sys
         arucoMarkerPoseBaseDir = path.join(path.dirname(path.realpath(__file__)), ".")
         sys.path.insert(0, arucoMarkerPoseBaseDir)
-        matrixCoeff = np.load(path.join(arucoMarkerPoseBaseDir, "calibration_matrix_simulation.npy"))
-        disCoeff = np.load(path.join(arucoMarkerPoseBaseDir, "distortion_coefficients_simulation.npy"))
+        matrixCoeff = np.load(path.join(arucoMarkerPoseBaseDir, "calibration_matrix_"+markerPostfixName+".npy"))
+        disCoeff = np.load(path.join(arucoMarkerPoseBaseDir, "distortion_coefficients_"+markerPostfixName+".npy"))
         frame, rotationVector, translationVector, ids = ArucoMarker.pose_esitmation(frame, self.aruco_dict_type, matrixCoeff, disCoeff, markerLength)
         for i in range(len(translationVector)):
             print("Distance to marker {0}: x: {1:.2f}, y: {2:.2f}, z: {3:.2f} ".format(ids[i], 
@@ -117,10 +117,10 @@ class ArucoMarker():
         return frame, rotationVector, translationVector, ids
 
 
-    def tutorial_03_aruco_marker_pose_estimation(self, frame, markerLength):
+    def tutorial_03_aruco_marker_pose_estimation(self, frame, markerLength, markerPostfixName):
 
         #ff = cv2.imread(path.join(self.test_image_folder_path, "arucoMarker01.png"))
-        frame, rotationVector, translationVector, ids = self.print_distance_to_aruco_marker(frame, markerLength)
+        frame, rotationVector, translationVector, ids = self.print_distance_to_aruco_marker(frame, markerLength, markerPostfixName)
         return frame, rotationVector, translationVector, ids
 
 

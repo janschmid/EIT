@@ -51,6 +51,12 @@ class ArucoPoseEstimatorNode:
         self.frame = 0
         self.rotationVector = 0
         self.translationVector = 0
+        
+        if(rospy.get_param("SIMULATION")==True):
+            self.markerPostfixName = "simulation"
+        else:
+            self.markerPostfixName = "piCam"
+        rospy.loginfo("Using {0} calibration".format(self.markerPostfixName))
         #self.ids = 
 
         self.t_show_image = threading.Thread(target=self.show_image)
@@ -69,7 +75,8 @@ class ArucoPoseEstimatorNode:
 
     def estimate_pose(self):
         while not rospy.is_shutdown():
-            self.frame, self.rotationVector, self.translationVector, self.ids = self.arucoMarker.tutorial_03_aruco_marker_pose_estimation(self.current_image.astype('uint8'), self.markerLength)
+            self.frame, self.rotationVector, self.translationVector, self.ids = self.arucoMarker.tutorial_03_aruco_marker_pose_estimation(
+                self.current_image.astype('uint8'), self.markerLength, self.markerPostfixName)
             #for x in range(len(self.ids)):
             #print(self.ids)
             if self.ids is not None: 
@@ -93,11 +100,22 @@ class ArucoPoseEstimatorNode:
                 self.aruco_pose_msg.pose.position.z = 0.0 
                 self.aruco_pos_pub.publish(self.aruco_pose_msg)
 
+            else:
+                self.aruco_pose_msg.header.frame_id = "aruco_marker"
+                self.aruco_pose_msg.header.stamp = rospy.Time.now()
+                self.aruco_pose_msg.pose.position.x = 0
+                self.aruco_pose_msg.pose.position.y = 0
+                self.aruco_pose_msg.pose.position.z = 0
+
+                self.aruco_pos_pub.publish(self.aruco_pose_msg)
+
+
     def show_image(self):
-        while not rospy.is_shutdown():
-                cv2.imshow('Drone camera', self.frame)
-                cv2.waitKey(1) 
-        cv2.destroyAllWindows() 
+        if(rospy.get_param("SIMULATION")==True):
+            while not rospy.is_shutdown():
+                    cv2.imshow('Drone camera', self.frame)
+                    cv2.waitKey(1) 
+            cv2.destroyAllWindows() 
 
 if __name__ == '__main__':
     SPC = ArucoPoseEstimatorNode()

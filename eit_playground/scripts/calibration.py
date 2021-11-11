@@ -32,6 +32,7 @@ def calibrate(dirpath, square_size, width=9, height=6, visualize=False):
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         # Find the chess board corners
+        print("start processing: {0}".format(fname))
         ret, corners = cv2.findChessboardCorners(gray, (width, height), None)
 
         # If found, add object points, image points (after refining them)
@@ -48,7 +49,7 @@ def calibrate(dirpath, square_size, width=9, height=6, visualize=False):
             cv2.imshow('img',img)
             cv2.waitKey(0)
 
-
+    print("Start camera calibration")
     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
 
     return [ret, mtx, dist, rvecs, tvecs]
@@ -80,5 +81,5 @@ if __name__ == '__main__':
     print(dist)
     import os.path as path
     folderPath = path.join(path.dirname(path.realpath(__file__)))
-    np.save(path.join(folderPath, "calibration_matrix_simulation"), mtx)
-    np.save(path.join(folderPath, "distortion_coefficients_simulation"), dist)
+    np.save(path.join(folderPath, "calibration_matrix_piCam"), mtx)
+    np.save(path.join(folderPath, "distortion_coefficients_piCam"), dist)
