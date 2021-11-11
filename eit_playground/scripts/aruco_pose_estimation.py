@@ -106,10 +106,11 @@ class ArucoPoseEstimatorNode:
 
 
     def show_image(self):
-        while not rospy.is_shutdown():
-                cv2.imshow('Drone camera', self.frame)
-                cv2.waitKey(1) 
-        cv2.destroyAllWindows() 
+        if(rospy.get_param("SIMULATION")==True):
+            while not rospy.is_shutdown():
+                    cv2.imshow('Drone camera', self.frame)
+                    cv2.waitKey(1) 
+            cv2.destroyAllWindows() 
 
 if __name__ == '__main__':
     SPC = ArucoPoseEstimatorNode()
