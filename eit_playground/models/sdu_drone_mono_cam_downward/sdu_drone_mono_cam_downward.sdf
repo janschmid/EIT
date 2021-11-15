@@ -17,11 +17,16 @@
         </inertia>
       </inertial>
       <collision name='base_link_inertia_collision'>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0 0 0.125 0 -0 0</pose>
         <geometry>
-          <box>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://sdu_description/meshes/sdu_drone.dae</uri>
+          </mesh>
+          
+          <!--<box>
             <size>0.74 0.74 0.25</size>
-          </box>
+          </box>-->
         </geometry>
         <surface>
           <contact>
@@ -772,7 +777,7 @@
 
     <!-- Mono Camera sensor (Downward) -->
     <link name='sensor_link'>
-      <pose>0 0 0 0 1.57 0</pose>
+      <pose>0 0.25 0.1 0 1.57 0</pose>
       <inertial>
         <mass>0.015</mass>
         <inertia>
