@@ -17,11 +17,11 @@
         </inertia>
       </inertial>
       <collision name='base_link_inertia_collision'>
-        <pose>0 0 0.125 0 -0 0</pose>
+        <pose>0 0 -0.040 0 -0 0</pose>
         <geometry>
           <mesh>
             <scale>1 1 1</scale>
-            <uri>model://sdu_description/meshes/sdu_drone.dae</uri>
+            <uri>model://sdu_description/meshes/sdu_drone_collision.dae</uri>
           </mesh>
           
           <!--<box>
