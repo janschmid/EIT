@@ -94,12 +94,7 @@ class ArucoPoseEstimatorNode:
                 self.aruco_pose_msg.pose.orientation.w = q[3]
 
                 self.aruco_pos_pub.publish(self.aruco_pose_msg)
-            else:
-                self.aruco_pose_msg.pose.position.x = 0.0
-                self.aruco_pose_msg.pose.position.y = 0.0
-                self.aruco_pose_msg.pose.position.z = 0.0 
-                self.aruco_pos_pub.publish(self.aruco_pose_msg)
-
+                
             else:
                 self.aruco_pose_msg.header.frame_id = "aruco_marker"
                 self.aruco_pose_msg.header.stamp = rospy.Time.now()
