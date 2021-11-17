@@ -259,7 +259,7 @@ int main(int argc, char **argv){
 		// Run guided landing with spline if marker is seen. 
 		}else{
 			
-			targetWaypoint = waypoint(localPosX+(camPosX*-1), localPosY+(camPosY*-1), 1);
+			targetWaypoint = waypoint(localPosY+camPosY, localPosX-camPosX, 1);
 			
 			std::cout << "--\n aruco: " << camPosX << "\n";
 			std::cout << "drone: " << localPosX << "\n";
