@@ -8,12 +8,12 @@
 #include <math.h>
 
 #define N 4
-#define TIMING 1.0
+#define TIMING 0.5
 
 bool mission = true;
 bool startLanding = true;
-double zLanding;
 bool running = true;
+bool threadSaysLandingEnded = false;
 
 //Callbacks
 mavros_msgs::State current_state;
@@ -21,23 +21,31 @@ void state_cb(const mavros_msgs::State::ConstPtr& msg){
     current_state = *msg;
 }
 
-double localPosX = 0.0;
-double localPosY = 0.0;
-double localPosZ = 0.0;
+double localPos[3];
+double localOrient[4];
 void local_pos_cb(geometry_msgs::PoseStamped msg){
-	localPosX = msg.pose.position.x;
-	localPosY = msg.pose.position.y;
-	localPosZ = msg.pose.position.z;
+	localPos[0] = msg.pose.position.x;
+	localPos[1] = msg.pose.position.y;
+	localPos[2] = msg.pose.position.z;
+	localOrient[0] = msg.pose.orientation.x;
+	localOrient[1] = msg.pose.orientation.y;
+	localOrient[2] = msg.pose.orientation.z;
+	localOrient[3] = msg.pose.orientation.w;
 }
 
-double camPosX = 0.0;
-double camPosY = 0.0;
-double camPosZ = 0.0;
+double camPos[3];
+double camOrient[4];
 void cam_pos_cb(geometry_msgs::PoseStamped msg){
-	camPosX = msg.pose.position.x;
-	camPosY = msg.pose.position.y;
-	camPosZ = msg.pose.position.z;
-	mission = false;
+	camPos[0] = msg.pose.position.x;
+	camPos[1] = msg.pose.position.y;
+	camPos[2] = msg.pose.position.z;
+	camOrient[0] = msg.pose.orientation.x;
+	camOrient[1] = msg.pose.orientation.y;
+	camOrient[2] = msg.pose.orientation.z;
+	camOrient[3] = msg.pose.orientation.w;
+	if(camPos[0] != 0.0 && camPos[1] != 0.0){
+		mission=false;
+	}
 }
 // End callbacks
 
@@ -48,6 +56,8 @@ geometry_msgs::PoseStamped waypoint(double xRel, double yRel, double zRel){
 	pose.pose.position.z = zRel;
 	return pose;
 }
+
+
 
 // For matrix mathematics
 void getCofactor(double mat[N][N], double temp[N][N], int p, int q, int n){
@@ -98,7 +108,8 @@ double getZ(double t, double a[4]){
 	return (1*a[0]+t*a[1]+t*t*a[2]+t*t*t*a[3]);
 }
 
-void altitudeControlThread(double t, double zStart, double zEnd){
+void altitudeControlThread(double *localPos, double *camPos, double zEnd, ros::ServiceClient sm, geometry_msgs::PoseStamped *waypoint){
+	double t = 10;
 	double B[4][4] = {{1,0,0,0},{0,1,0,0},{1,t,t*t,t*t*t},{0,1,2*t,3*t*t}};
 	double BA11 = B[1][1]*B[2][2]*B[3][3]+B[1][2]*B[2][3]*B[3][1]+B[1][3]*B[2][1]*B[3][2] -B[1][3]*B[2][2]*B[3][1]-B[1][2]*B[2][1]*B[3][3]-B[1][1]*B[2][3]*B[3][2];
 	double BA12 = -B[0][1]*B[2][2]*B[3][3]-B[0][2]*B[2][3]*B[3][1]-B[0][3]*B[2][1]*B[3][2] +B[0][3]*B[2][2]*B[3][1]+B[0][2]*B[2][1]*B[3][3]+B[0][1]*B[2][3]*B[3][2];
@@ -129,33 +140,63 @@ void altitudeControlThread(double t, double zStart, double zEnd){
 		}
 	}
 	double alpha[4];
-	double initVal[4] = {zStart,0,zEnd,0};	//Starting altitude + velocity + ending altitude + velocity
+	double initVal[4] = {localPos[2],0,zEnd,0};	//Starting altitude + velocity + ending altitude + velocity
 	for(int i=0; i<4; i++){
 		for(int j=0; j<4; j++){
 			alpha[i] += pInvB[i][j]*initVal[j];
 		}
 	}
-	double zNow = 0;
+	
+	double zNow = localPos[2];
 	double timer = 0;
 	clock_t startTime = clock();	//Start timer
 	while(running){
-		if((clock()-startTime)/CLOCKS_PER_SEC > TIMING){
-			timer += 1.0;
-			zNow = getZ(timer, alpha);
-			zLanding = zNow;	//I know I know this is not necessary...
-			startTime = clock();
-			std::cout << "landing\n";
-			if(sqrt((zEnd-zNow)*(zEnd-zNow)) < 0.01){
-				//Let thread end when landing occurs
-				std::cout << "End landing\n";
-				running = false;
-				break;
+		if(std::abs(camPos[0]+camPos[1]) < 0.15){
+			std::cout << localPos[2]-zNow << "\n";
+			if(localPos[2]-zNow <= 0.10 & (clock()-startTime)/CLOCKS_PER_SEC > TIMING){
+				timer += 1.0;
+				zNow = getZ(timer, alpha);
+				(*waypoint).pose.position.z = zNow;	//I know I know this is not necessary...
+				startTime = clock();
+				std::cout << zNow << " landing\n";
+				std::cout << localPos[2] << " Current altitude\n";
 			}
-			if(zLanding < 0.01){
-				running = false;
-				break;
-			}
+		}	
+		if(localPos[2] <= zEnd+0.05){
+			//Let thread end when landing occurs
+			std::cout << "End landing\n";
+			running = false;
+    		mavros_msgs::SetMode land_set_mode;
+    		land_set_mode.request.custom_mode = "AUTO.LAND";
+			sm.call(land_set_mode); 
+			threadSaysLandingEnded = true;
+			break;
 		}
+	}
+}
+
+void orintControl(geometry_msgs::PoseStamped *waypoint, double *curOrient, double *newOrient){
+	(*waypoint).pose.orientation.x = newOrient[0]-curOrient[0];
+	(*waypoint).pose.orientation.y = newOrient[1]-curOrient[1];
+	(*waypoint).pose.orientation.z = newOrient[2]-curOrient[2];
+	(*waypoint).pose.orientation.w = newOrient[3]-curOrient[3];
+}
+
+void posControl(geometry_msgs::PoseStamped *waypoint, double *curPos, double fX, double fY){
+	(*waypoint).pose.position.x = localPos[0]+fY*-1;
+	(*waypoint).pose.position.y = localPos[1]+fX*-1;
+	(*waypoint).pose.position.z = localPos[2];
+}
+
+void altControl(geometry_msgs::PoseStamped *waypoint, double *curPos, double *camPos, ros::ServiceClient sm){
+	double endPoint = abs(curPos[2]-camPos[2]);
+	double nextPoint = curPos[2]*0.1;
+	(*waypoint).pose.position.z = curPos[2]-nextPoint;
+	if(curPos[2] <= endPoint){
+    	mavros_msgs::SetMode land_set_mode;
+    	land_set_mode.request.custom_mode = "AUTO.LAND";
+		sm.call(land_set_mode);
+		threadSaysLandingEnded = true;	
 	}
 }
 
@@ -190,12 +231,14 @@ int main(int argc, char **argv){
 	int i = 0;
 	double R = 0.3;			//30cm radius
 	double landingR = 0.3; //1cm radius
+	double filterX = 0.0, filterY = 0.0;
+	
 	//waypoint array
 	std::vector<geometry_msgs::PoseStamped> waypoints;
+	waypoints.push_back(waypoint(0,0,2));
+	waypoints.push_back(waypoint(1,1,2));
 	waypoints.push_back(waypoint(2,2,2));
-	waypoints.push_back(waypoint(2,-2,2));
-	waypoints.push_back(waypoint(0,0,4));
-
+	waypoints.push_back(waypoint(3,3,2));
 
     //send a few setpoints before starting
     for(int i = 100; ros::ok() && i > 0; --i){
@@ -241,44 +284,47 @@ int main(int argc, char **argv){
                 last_request = ros::Time::now();
             }
         }
+		
 		// Run waypoint mission + landing if no marker is seen.
 		if(mission == true){
-			if(std::abs(localPosX-waypoints[i].pose.position.x)+std::abs(localPosY-waypoints[i].pose.position.y)+std::abs(localPosZ-waypoints[i].pose.position.z) < R){
+			if(std::abs(localPos[0]-waypoints[i].pose.position.x)+std::abs(localPos[1]-waypoints[i].pose.position.y)+std::abs(localPos[2]-waypoints[i].pose.position.z) < R){
 				i++;
+				std::cout << "Next waypoint\n";
 			}
 			if(i>waypoints.size()-1){
 				i = waypoints.size()-1;
 				mission = false;
+				targetWaypoint.pose.position.z = localPos[2];
+				std::cout << "Last waypoint reached\n";
 				continue;
-				//if(set_mode_client.call(land_set_mode) && land_set_mode.response.mode_sent){
-				//	ROS_INFO("AUTO.LAND enabled");
-				//	break;
-				//}
 			}	
         	local_pos_pub.publish(waypoints[i]);
+		
 		// Run guided landing with spline if marker is seen. 
 		}else{
-			
-			targetWaypoint = waypoint(localPosX+(camPosX*-1), localPosY+(camPosY*-1), 1);
-			
-			std::cout << "--\n aruco: " << camPosX << "\n";
-			std::cout << "drone: " << localPosX << "\n";
-			std::cout << "target: " << targetWaypoint << "\n---";
-			/*if(std::abs(camPosX+camPosY) < landingR){
-				if(startLanding == true){
-					landingThread = std::thread(altitudeControlThread, 10.0, localPosZ, 0.0);
-					startLanding = false;
-				}
-				std::cout << zLanding << "\n";
-				targetWaypoint.pose.position.z = zLanding;
-			}*/	
-			local_pos_pub.publish(targetWaypoint);
+			filterX = (filterX+camPos[0])/2;
+			filterY = (filterY+camPos[1])/2;
+			if(filterX < 0.01) filterX = 0.0;
+			if(filterY < 0.01) filterY = 0.0;
+
+			posControl(&targetWaypoint, localPos, filterX, filterY);
+			orintControl(&targetWaypoint, localOrient, camOrient);
+			altControl(&targetWaypoint, localPos, camPos, set_mode_client);
+
+			//if(startLanding == true){
+			//	landingThread = std::thread(altitudeControlThread, localPos, camPos, 0.10, set_mode_client, &targetWaypoint);
+			//	startLanding = false;
+			//}
+			//local_pos_pub.publish(targetWaypoint);
 		}
-        ros::spinOnce();
-        rate.sleep();
-    }
-	if(mission == false){
-    	landingThread.join();
+		
+		if(threadSaysLandingEnded == true){
+			//landingThread.join();
+			break;
+		}
+		ros::spinOnce();
+		rate.sleep();
+    //End og game-loop
 	}
     ROS_INFO("Done");
 
