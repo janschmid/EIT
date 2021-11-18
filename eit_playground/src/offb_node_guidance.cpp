@@ -199,10 +199,8 @@ void posControl(geometry_msgs::PoseStamped *waypoint, double *curPos, double fX,
 }
 
 void altControl(geometry_msgs::PoseStamped *waypoint, double *curPos, double *camPos, ros::ServiceClient sm){
-	double endPoint = abs(curPos[2]-camPos[2]);
-	double nextPoint = curPos[2]*0.1;
-	(*waypoint).pose.position.z = curPos[2]-nextPoint;
-	if(curPos[2] <= endPoint){
+	(*waypoint).pose.position.z = curPos[2]-10;
+	if(camPos[2] <= 0.5){
     	mavros_msgs::SetMode land_set_mode;
     	land_set_mode.request.custom_mode = "AUTO.LAND";
 		sm.call(land_set_mode);
@@ -322,11 +320,11 @@ int main(int argc, char **argv){
 			posControl(&targetWaypoint, localPos, filterX, filterY);
 			//orintControl(&targetWaypoint, localOrient, camOrient);
 			//cam_rotation(degree, camPos);
-			
-			if(startLanding == true){
-				landingThread = std::thread(altitudeControlThread, localPos, camPos, 0.10, set_mode_client, &targetWaypoint);
-				startLanding = false;
-			}
+			altControl(&targetWaypoint, localPos camPos, set_mode_client);	
+			//if(startLanding == true){
+			//	landingThread = std::thread(altitudeControlThread, localPos, camPos, 0.10, set_mode_client, &targetWaypoint);
+			//	startLanding = false;
+			//}
 			local_pos_pub.publish(targetWaypoint);
 		}
 		
