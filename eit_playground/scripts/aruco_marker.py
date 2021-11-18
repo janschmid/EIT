@@ -104,7 +104,7 @@ class ArucoMarker():
 
     def print_distance_to_aruco_marker(self, frame, markerLength, markerPostfixName):
         import sys
-        arucoMarkerPoseBaseDir = path.join(path.dirname(path.realpath(__file__)), ".")
+        arucoMarkerPoseBaseDir = path.dirname(path.realpath(__file__))
         sys.path.insert(0, arucoMarkerPoseBaseDir)
         matrixCoeff = np.load(path.join(arucoMarkerPoseBaseDir, "calibrationFiles", "calibration_matrix_"+markerPostfixName+".npy"))
         disCoeff = np.load(path.join(arucoMarkerPoseBaseDir, "calibrationFiles", "distortion_coefficients_"+markerPostfixName+".npy"))

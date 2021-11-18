@@ -51,7 +51,7 @@ class ArucoPoseEstimatorNode:
         
         if(rospy.get_param("SIMULATION")==True):
             self.markerPostfixName = "simulation"
-            self.markerLength=0.1
+            self.markerLength=0.05
         else:
             self.markerPostfixName = "piCam"
             # set to the size of the real marker 
