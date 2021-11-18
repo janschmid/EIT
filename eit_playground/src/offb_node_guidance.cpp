@@ -14,6 +14,8 @@ bool mission = true;
 bool startLanding = true;
 bool running = true;
 bool threadSaysLandingEnded = false;
+bool SIMULATION = true;
+double rotatedCam[3];
 
 //Callbacks
 mavros_msgs::State current_state;
@@ -57,7 +59,14 @@ geometry_msgs::PoseStamped waypoint(double xRel, double yRel, double zRel){
 	return pose;
 }
 
-
+void cam_rotation(double deg, double *vect){
+	double RMat[3][3] = {{cos(deg),-sin(deg),0},{sin(deg),cos(deg),0},{0,0,1.0}};
+	for(int i=0; i<3; i++){
+		for(int j=0; j<3; j++){
+			rotatedCam[i] += RMat[i][j]*vect[j];
+		}
+	}
+}
 
 // For matrix mathematics
 void getCofactor(double mat[N][N], double temp[N][N], int p, int q, int n){
@@ -147,13 +156,14 @@ void altitudeControlThread(double *localPos, double *camPos, double zEnd, ros::S
 		}
 	}
 	
+	(*waypoint).pose.position.z = localPos[2];	//I know I know this is not necessary...
 	double zNow = localPos[2];
 	double timer = 0;
 	clock_t startTime = clock();	//Start timer
 	while(running){
-		if(std::abs(camPos[0]+camPos[1]) < 0.15){
-			std::cout << localPos[2]-zNow << "\n";
-			if(localPos[2]-zNow <= 0.10 & (clock()-startTime)/CLOCKS_PER_SEC > TIMING){
+		if(std::abs(camPos[0]+camPos[1]) < 0.20){
+			//std::cout << localPos[2]-zNow << "\n";
+			if(std::abs(localPos[2]-zNow) <= 0.10 & (clock()-startTime)/CLOCKS_PER_SEC > TIMING){
 				timer += 1.0;
 				zNow = getZ(timer, alpha);
 				(*waypoint).pose.position.z = zNow;	//I know I know this is not necessary...
@@ -185,7 +195,7 @@ void orintControl(geometry_msgs::PoseStamped *waypoint, double *curOrient, doubl
 void posControl(geometry_msgs::PoseStamped *waypoint, double *curPos, double fX, double fY){
 	(*waypoint).pose.position.x = localPos[0]+fY*-1;
 	(*waypoint).pose.position.y = localPos[1]+fX*-1;
-	(*waypoint).pose.position.z = localPos[2];
+	//(*waypoint).pose.position.z = localPos[2];
 }
 
 void altControl(geometry_msgs::PoseStamped *waypoint, double *curPos, double *camPos, ros::ServiceClient sm){
@@ -232,6 +242,7 @@ int main(int argc, char **argv){
 	double R = 0.3;			//30cm radius
 	double landingR = 0.3; //1cm radius
 	double filterX = 0.0, filterY = 0.0;
+	double degree = 90.0;
 	
 	//waypoint array
 	std::vector<geometry_msgs::PoseStamped> waypoints;
@@ -267,24 +278,25 @@ int main(int argc, char **argv){
    
 
 	while(ros::ok()){
-        if( current_state.mode != "OFFBOARD" &&
-            (ros::Time::now() - last_request > ros::Duration(5.0))){
-            ROS_INFO("Trying to enable Offboard...");
-            if( set_mode_client.call(offb_set_mode) && offb_set_mode.response.mode_sent){
-                ROS_INFO(">> Offboard enabled");
-            }
-            last_request = ros::Time::now();
-        } else {
-            if( !current_state.armed &&
-                (ros::Time::now() - last_request > ros::Duration(5.0))){
-                ROS_INFO("Trying to arm...");
-                if( arming_client.call(arm_cmd) && arm_cmd.response.success){
-                    ROS_INFO(">> Vehicle armed");
-                }
-                last_request = ros::Time::now();
-            }
-        }
-		
+        if(SIMULATION == true){
+			if( current_state.mode != "OFFBOARD" &&
+            	(ros::Time::now() - last_request > ros::Duration(5.0))){
+            	ROS_INFO("Trying to enable Offboard...");
+            	if( set_mode_client.call(offb_set_mode) && offb_set_mode.response.mode_sent){
+                	ROS_INFO(">> Offboard enabled");
+            	}
+            	last_request = ros::Time::now();
+        	} else {
+            	if( !current_state.armed &&
+                	(ros::Time::now() - last_request > ros::Duration(5.0))){
+                	ROS_INFO("Trying to arm...");
+                	if( arming_client.call(arm_cmd) && arm_cmd.response.success){
+                    	ROS_INFO(">> Vehicle armed");
+                	}
+                	last_request = ros::Time::now();
+            	}
+        	}
+		}
 		// Run waypoint mission + landing if no marker is seen.
 		if(mission == true){
 			if(std::abs(localPos[0]-waypoints[i].pose.position.x)+std::abs(localPos[1]-waypoints[i].pose.position.y)+std::abs(localPos[2]-waypoints[i].pose.position.z) < R){
@@ -308,14 +320,14 @@ int main(int argc, char **argv){
 			if(filterY < 0.01) filterY = 0.0;
 
 			posControl(&targetWaypoint, localPos, filterX, filterY);
-			orintControl(&targetWaypoint, localOrient, camOrient);
-			altControl(&targetWaypoint, localPos, camPos, set_mode_client);
-
-			//if(startLanding == true){
-			//	landingThread = std::thread(altitudeControlThread, localPos, camPos, 0.10, set_mode_client, &targetWaypoint);
-			//	startLanding = false;
-			//}
-			//local_pos_pub.publish(targetWaypoint);
+			//orintControl(&targetWaypoint, localOrient, camOrient);
+			//cam_rotation(degree, camPos);
+			
+			if(startLanding == true){
+				landingThread = std::thread(altitudeControlThread, localPos, camPos, 0.10, set_mode_client, &targetWaypoint);
+				startLanding = false;
+			}
+			local_pos_pub.publish(targetWaypoint);
 		}
 		
 		if(threadSaysLandingEnded == true){
