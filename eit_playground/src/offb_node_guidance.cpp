@@ -199,8 +199,8 @@ void posControl(geometry_msgs::PoseStamped *waypoint, double *curPos, double fX,
 }
 
 void altControl(geometry_msgs::PoseStamped *waypoint, double *curPos, double *camPos, ros::ServiceClient sm){
-	(*waypoint).pose.position.z = curPos[2]-10;
-	if(camPos[2] <= 0.5){
+	(*waypoint).pose.position.z = curPos[2]-0.1;
+	if(camPos[2] <= 0.05){
     	mavros_msgs::SetMode land_set_mode;
     	land_set_mode.request.custom_mode = "AUTO.LAND";
 		sm.call(land_set_mode);
