@@ -106,8 +106,8 @@ class ArucoMarker():
         import sys
         arucoMarkerPoseBaseDir = path.join(path.dirname(path.realpath(__file__)), ".")
         sys.path.insert(0, arucoMarkerPoseBaseDir)
-        matrixCoeff = np.load(path.join(arucoMarkerPoseBaseDir, "calibration_matrix_"+markerPostfixName+".npy"))
-        disCoeff = np.load(path.join(arucoMarkerPoseBaseDir, "distortion_coefficients_"+markerPostfixName+".npy"))
+        matrixCoeff = np.load(path.join(arucoMarkerPoseBaseDir, "calibrationFiles", "calibration_matrix_"+markerPostfixName+".npy"))
+        disCoeff = np.load(path.join(arucoMarkerPoseBaseDir, "calibrationFiles", "distortion_coefficients_"+markerPostfixName+".npy"))
         frame, rotationVector, translationVector, ids = ArucoMarker.pose_esitmation(frame, self.aruco_dict_type, matrixCoeff, disCoeff, markerLength)
         for i in range(len(translationVector)):
             print("Distance to marker {0}: x: {1:.2f}, y: {2:.2f}, z: {3:.2f} ".format(ids[i], 
