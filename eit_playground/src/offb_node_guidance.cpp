@@ -309,17 +309,17 @@ int main(int argc, char **argv){
 
 			posControl(&targetWaypoint, localPos, filterX, filterY);
 			orintControl(&targetWaypoint, localOrient, camOrient);
-			altControl(&targetWaypoint, localPos, camPos, set_mode_client);
+			//altControl(&targetWaypoint, localPos, camPos, set_mode_client);
 
-			//if(startLanding == true){
-			//	landingThread = std::thread(altitudeControlThread, localPos, camPos, 0.10, set_mode_client, &targetWaypoint);
-			//	startLanding = false;
-			//}
-			//local_pos_pub.publish(targetWaypoint);
+			if(startLanding == true){
+				landingThread = std::thread(altitudeControlThread, localPos, camPos, 0.10, set_mode_client, &targetWaypoint);
+				startLanding = false;
+			}
+			local_pos_pub.publish(targetWaypoint);
 		}
 		
 		if(threadSaysLandingEnded == true){
-			//landingThread.join();
+			landingThread.join();
 			break;
 		}
 		ros::spinOnce();
