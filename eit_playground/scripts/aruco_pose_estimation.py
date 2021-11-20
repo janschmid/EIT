@@ -34,6 +34,7 @@ class ArucoPoseEstimatorNode:
         rospy.init_node('aruco_pose_estimator')
 
         self.cam_sub = rospy.Subscriber('/mono_cam/image_raw', Image, self.cb_image)
+        self.target_point_sub = rospy.Subscriber('/mono_cam/image_raw', Image, self.cb_image)
 
         self.aruco_pos_pub = rospy.Publisher('/aruco_pose', PoseStamped, queue_size=10)
 
@@ -108,6 +109,8 @@ class ArucoPoseEstimatorNode:
     def show_image(self):
         if(rospy.get_param("SIMULATION")==True):
             while not rospy.is_shutdown():
+                    #print("Shape: ", np.shape(self.frame))
+                    cv2.circle(self.frame,(320,240), 5, (0,0,255), -1)
                     cv2.imshow('Drone camera', self.frame)
                     cv2.waitKey(1) 
             cv2.destroyAllWindows() 
