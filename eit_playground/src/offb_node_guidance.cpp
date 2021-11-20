@@ -230,12 +230,12 @@ void posControl(geometry_msgs::PoseStamped *waypoint, double *curPos, double fX,
 	double camRy = fX*R[1][0] + fY*R[1][1];
 
 	
-	//(*waypoint).pose.position.x = (curPos[0]+camRx)*kp;
-	//(*waypoint).pose.position.y = (curPos[1]+camRy)*kp;
+	(*waypoint).pose.position.x = (curPos[0]+camRx)*kp;
+	(*waypoint).pose.position.y = (curPos[1]+camRy)*kp;
 	
 
-	(*waypoint).pose.position.x = (curPos[0]+fY*-1)*kp;
-	(*waypoint).pose.position.y = (curPos[1]+fX*-1)*kp;
+	//(*waypoint).pose.position.x = (curPos[0]+fY*-1)*kp;
+	//(*waypoint).pose.position.y = (curPos[1]+fX*-1)*kp;
 	//(*waypoint).pose.position.z = curPos[2];
 }
 
