@@ -97,7 +97,7 @@ class ArucoPoseEstimatorNode:
                 self.aruco_pos_pub.publish(self.aruco_pose_msg)
                 
             else:
-                self.aruco_pose_msg.header.frame_id = "aruco_marker"
+                self.aruco_pose_msg.header.frame_id = "no_aruco_marker"
                 self.aruco_pose_msg.header.stamp = rospy.Time.now()
                 self.aruco_pose_msg.pose.position.x = 0
                 self.aruco_pose_msg.pose.position.y = 0

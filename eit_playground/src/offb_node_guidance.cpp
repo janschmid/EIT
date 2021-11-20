@@ -19,7 +19,7 @@ bool threadSaysLandingEnded = false;
 bool SIMULATION = true;
 double rotatedCam[3];
 
-//tf2::Quaternion arucoQuaternion;
+tf2::Quaternion arucoQuaternion;
 
 //Callbacks
 mavros_msgs::State current_state;
@@ -51,11 +51,12 @@ void cam_pos_cb(geometry_msgs::PoseStamped msg){
 	camOrient[2] = msg.pose.orientation.z;
 	camOrient[3] = msg.pose.orientation.w;
 
+	arucoQuaternion = tf2::Quaternion(camOrient[0], camOrient[1], camOrient[2], camOrient[3]);
 	/*arucoQuaternion[0] = camOrient[0];
 	arucoQuaternion[1] = camOrient[1];
 	arucoQuaternion[2] = camOrient[2];
-	arucoQuaternion[3] = camOrient[3];
-	*/
+	arucoQuaternion[3] = camOrient[3];*/
+	
 
 	if(msg.header.frame_id ==  "aruco_marker"){
 		frameSeen = true;
@@ -217,13 +218,10 @@ void orintControl(geometry_msgs::PoseStamped *waypoint, double *curOrient, doubl
 	(*waypoint).pose.orientation.y = QR[1]/mag;
 	(*waypoint).pose.orientation.z = QR[2]/mag;
 	(*waypoint).pose.orientation.w = QR[3]/mag;
-	//std::cout << "Cur " << curOrient[0] << " " << curOrient[1] << " " << curOrient[2] << " " << curOrient[3] << "\n";
-	//std::cout << "New " << newOrient[0] << " " << newOrient[1] << " " << newOrient[2] << " " << newOrient[3] << "\n";
-	//std::cout << "Rel " << QR[0] << " " << QR[1] << " " << QR[2] << " " << QR[3] << "\n";
 }
 
 void posControl(geometry_msgs::PoseStamped *waypoint, double *curPos, double fX, double fY){
-	/*
+	double kp = 1;
 	double roll, pitch, yaw;
     tf2::Matrix3x3(arucoQuaternion).getRPY(roll, pitch, yaw);
 	
@@ -232,12 +230,9 @@ void posControl(geometry_msgs::PoseStamped *waypoint, double *curPos, double fX,
 	double camRy = fX*R[1][0] + fY*R[1][1];
 
 	
-	(*waypoint).pose.position.x = (curPos[0]+camRx*-1)*kp;
-	(*waypoint).pose.position.y = (curPos[1]+camRy*-1)*kp;
+	//(*waypoint).pose.position.x = (curPos[0]+camRx)*kp;
+	//(*waypoint).pose.position.y = (curPos[1]+camRy)*kp;
 	
-	*/
-
-	double kp = 1;
 
 	(*waypoint).pose.position.x = (curPos[0]+fY*-1)*kp;
 	(*waypoint).pose.position.y = (curPos[1]+fX*-1)*kp;
@@ -366,15 +361,12 @@ int main(int argc, char **argv){
 			if(filterX < 0.01) filterX = 0.0;
 			if(filterY < 0.01) filterY = 0.0;
 			std::cout << camPos[0] << " " << camPos[1] << "\n";
-			
-			
-			orintControl(&targetWaypoint, localOrient, camOrient);
-			
+						
 			posControl(&targetWaypoint, localPos, filterX, filterY);
-			//orintControl(&targetWaypoint, localOrient, camOrient);
 			//cam_rotation(degree, camPos);
 			//altControl(&targetWaypoint, localPos, camPos, set_mode_client);	
 			if(startLanding == true){
+				//orintControl(&targetWaypoint, localOrient, camOrient);
 				landingThread = std::thread(altitudeControlThread, localPos, camPos, 0.0, set_mode_client, &targetWaypoint);
 				startLanding = false;
 			}
