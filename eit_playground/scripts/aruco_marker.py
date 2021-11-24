@@ -5,7 +5,8 @@ from cv2 import aruco
 import numpy as np
 import sys
 from collections import defaultdict
-
+import math
+# from tf.transformations import quaternion_from_euler
 
 class ArucoMarker():
     aruco_dict = None
@@ -134,20 +135,33 @@ class ArucoMarker():
         frame, rotationVector, translationVector, ids = self.print_distance_to_aruco_marker(frame, markerLength, markerPostfixName)
         return frame, rotationVector, translationVector, ids
 
+    def get_global_pos_and_euler_angles(self, frame, markerLength, markerPostfixName):
+        frame, rotationVector, translationVector, ids = self.print_distance_to_aruco_marker(frame, markerLength, markerPostfixName)
+        eulerAngle=corrected_pos=None
+        if(len(rotationVector)>=1):
+            eulerAngle = ArucoMarker.rotationVectorToEulerAngles(rotationVector[0][0][0])
+            corrected_pos = ArucoMarker.correct_rotation_matrix(translationVector[0][0][0],eulerAngle[0])
+            corrected_pos.append(translationVector[0][0][0][2])
+        return eulerAngle, corrected_pos
+
 
     def tutorial_03_aruco_marker_pose_estimation_camera_feed(self):
         import time
         video = cv2.VideoCapture(0)
         # time.sleep(2.0)
-
+        arucoMarker = ArucoMarker()
         while True:
             ret, frame = video.read()
 
             if not ret:
                 break
+            eulerAngle, corrected_global_position = arucoMarker.get_global_pos_and_euler_angles(frame, 0.07, "laptop")
+            if (eulerAngle is not None and
+                corrected_global_position is not None and
+                len(eulerAngle)>0 and len(corrected_global_position)>0):
+                print("{0}, {1}".format(eulerAngle,corrected_global_position))
             
-            output,_,_,_= self.print_distance_to_aruco_marker(frame, 0.1, "simulation")
-            cv2.imshow('Estimated Pose', output)
+            cv2.imshow('Estimated Pose', frame)
 
             key = cv2.waitKey(1) & 0xFF
             if key == ord('q'):
@@ -156,6 +170,54 @@ class ArucoMarker():
         video.release()
         cv2.destroyAllWindows()
 
+    def rotate(origin, point, angle):
+        """
+        Rotate a point counterclockwise by a given angle around a given origin.
+
+        The angle should be given in radians.
+        """
+        ox, oy = origin
+        px, py = point
+
+        qx = ox + math.cos(angle) * (px - ox) - math.sin(angle) * (py - oy)
+        qy = oy + math.sin(angle) * (px - ox) + math.cos(angle) * (py - oy)
+        return qx, qy
+
+    def correct_rotation_matrix(translationVector, angle):
+        origin = [0,0]
+        if(len(translationVector)==3):
+            qx, qy = ArucoMarker.rotate(origin, translationVector[0:2],angle)
+            return [qx,qy]
+        return None
+            # print("rotation:{1}, Translation: {0}, eulerAngle: {2}".format(translationVector, (qx,qy), eulerAngle[2]))
+            # print(qx, qy)
+    
+    def isRotationMatrix(R) :
+
+        Rt = np.transpose(R)
+        shouldBeIdentity = np.dot(Rt, R)
+        I = np.identity(3, dtype = R.dtype)
+        n = np.linalg.norm(I - shouldBeIdentity)
+        return n < 1e-6
+	 
+    def rotationVectorToEulerAngles(R):
+        R, _ = cv2.Rodrigues(R)
+        if not (ArucoMarker.isRotationMatrix(R)):
+            return
+        sy = math.sqrt(R[0,0] * R[0,0] +  R[1,0] * R[1,0])
+
+        singular = sy < 1e-6
+
+        if  not singular :
+            x = math.atan2(R[2,1] , R[2,2])
+            y = math.atan2(-R[2,0], sy)
+            z = math.atan2(R[1,0], R[0,0])
+        else :
+            x = math.atan2(-R[1,2], R[1,1])
+            y = math.atan2(-R[2,0], sy)
+            z = 0
+
+        return np.array([x, y, z])
 
 if __name__ == "__main__":
     arucoMarker = ArucoMarker()

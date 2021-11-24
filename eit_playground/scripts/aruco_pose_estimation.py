@@ -11,6 +11,7 @@ from cv_bridge import CvBridge
 from geometry_msgs.msg import PoseStamped
 from aruco_marker import ArucoMarker
 import numpy as np
+import math
 
 from tf.transformations import quaternion_from_euler
 
@@ -47,8 +48,6 @@ class ArucoPoseEstimatorNode:
 
         self.current_image = np.zeros([480, 640, 3])
         self.frame = 0
-        self.rotationVector = 0
-        self.translationVector = 0
         
         if(rospy.get_param("SIMULATION")==True):
             self.markerPostfixName = "simulation"
@@ -73,31 +72,41 @@ class ArucoPoseEstimatorNode:
     def cb_image(self, image):
         self.current_image = self.bridge.imgmsg_to_cv2(image, desired_encoding='passthrough')
 
-
     def estimate_pose(self):
         while not rospy.is_shutdown():
-            self.frame, self.rotationVector, self.translationVector, self.ids = self.arucoMarker.tutorial_03_aruco_marker_pose_estimation(
-                self.current_image.astype('uint8'), self.markerLength, self.markerPostfixName)
-            #for x in range(len(self.ids)):
-            #print(self.ids)
-            if self.ids is not None: 
-                #print(self.translationVector[0][0][0][0])
-                q = quaternion_from_euler(self.rotationVector[0][0][0][0], self.rotationVector[0][0][0][1], self.rotationVector[0][0][0][2])
-                #print(q)
-                self.aruco_pose_msg.header.frame_id = "aruco_marker"
-                self.aruco_pose_msg.header.stamp = rospy.Time.now()
-                self.aruco_pose_msg.pose.position.x = self.translationVector[0][0][0][0]
-                self.aruco_pose_msg.pose.position.y = self.translationVector[0][0][0][1]
-                self.aruco_pose_msg.pose.position.z = self.translationVector[0][0][0][2]
+            # self.frame, self.rotationVector, self.translationVector, self.ids = self.arucoMarker.tutorial_03_aruco_marker_pose_estimation(
+            #     self.current_image.astype('uint8'), self.markerLength, self.markerPostfixName)
+            # #for x in range(len(self.ids)):
+            # #print(self.ids)
+            # if self.ids is not None: 
+            #     #print(self.translationVector[0][0][0][0])
+            #     q = quaternion_from_euler(self.rotationVector[0][0][0][0], self.rotationVector[0][0][0][1], self.rotationVector[0][0][0][2])
+            #     #print(q)
+            #     self.aruco_pose_msg.header.stamp = rospy.Time.now()
+            #     self.aruco_pose_msg.pose.position.x = self.translationVector[0][0][0][0]
+            #     self.aruco_pose_msg.pose.position.y = self.translationVector[0][0][0][1]
+            #     self.aruco_pose_msg.pose.position.z = self.translationVector[0][0][0][2]
+            #     self.aruco_pose_msg.pose.orientation.x = q[0]
+            #     self.aruco_pose_msg.pose.orientation.y = q[1]
+            #     self.aruco_pose_msg.pose.orientation.z = q[2]
+            #     self.aruco_pose_msg.pose.orientation.w = q[3]
+
+            #     self.aruco_pos_pub.publish(self.aruco_pose_msg)
+            eulerAngle, corrected_global_position = self.arucoMarker.get_global_pos_and_euler_angles(self.current_image.astype('uint8'), self.markerLength, self.markerPostfixName)
+
+            if (eulerAngle is not None and
+                corrected_global_position is not None and
+                len(eulerAngle)>0 and len(corrected_global_position)>0):
+                self.aruco_pose_msg.pose.position.x = corrected_global_position[0]
+                self.aruco_pose_msg.pose.position.y = corrected_global_position[1]
+                self.aruco_pose_msg.pose.position.z = corrected_global_position[2]
+                q = quaternion_from_euler(eulerAngle[0], eulerAngle[1], eulerAngle[2])
                 self.aruco_pose_msg.pose.orientation.x = q[0]
                 self.aruco_pose_msg.pose.orientation.y = q[1]
                 self.aruco_pose_msg.pose.orientation.z = q[2]
                 self.aruco_pose_msg.pose.orientation.w = q[3]
-
                 self.aruco_pos_pub.publish(self.aruco_pose_msg)
-                
             else:
-                self.aruco_pose_msg.header.frame_id = "no_aruco_marker"
                 self.aruco_pose_msg.header.stamp = rospy.Time.now()
                 self.aruco_pose_msg.pose.position.x = 0
                 self.aruco_pose_msg.pose.position.y = 0

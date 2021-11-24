@@ -80,6 +80,6 @@ if __name__ == '__main__':
     print(mtx)
     print(dist)
     import os.path as path
-    folderPath = path.join(path.dirname(path.realpath(__file__)))
+    folderPath = path.join(path.dirname(path.realpath(__file__)), "calibrationFiles")
     np.save(path.join(folderPath, "calibration_matrix_piCam"), mtx)
     np.save(path.join(folderPath, "distortion_coefficients_piCam"), dist)
