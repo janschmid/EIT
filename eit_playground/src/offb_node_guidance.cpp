@@ -18,7 +18,7 @@ bool running = true;
 bool threadSaysLandingEnded = false;
 bool SIMULATION = true;
 double rotatedCam[3];
-
+double closeEnough = false;
 tf2::Quaternion arucoQuaternion;
 
 //Callbacks
@@ -50,8 +50,6 @@ void cam_pos_cb(geometry_msgs::PoseStamped msg){
 	camOrient[1] = msg.pose.orientation.y;
 	camOrient[2] = msg.pose.orientation.z;
 	camOrient[3] = msg.pose.orientation.w;
-
-	arucoQuaternion = tf2::Quaternion(camOrient[0], camOrient[1], camOrient[2], camOrient[3]);	
 
 	if(msg.header.frame_id ==  "aruco_marker"){
 		frameSeen = true;
@@ -221,6 +219,7 @@ void orintControl(geometry_msgs::PoseStamped *waypoint, double *curOrient, doubl
 	double qRet[4] = {0,0,0,0};
 	double result[4];
 
+
 	invQuaternion(curOrient);
 	mulQuaternion(camOrient,curOrient,qRet);
 	invQuaternion(curOrient);
@@ -231,35 +230,10 @@ void orintControl(geometry_msgs::PoseStamped *waypoint, double *curOrient, doubl
 	(*waypoint).pose.orientation.y = result[1];
 	(*waypoint).pose.orientation.z = result[2];
 	(*waypoint).pose.orientation.w = result[3];
-	/*
-	double QR[4];
-	double Q_target[4];
-	//QR[0] = qRet[0]*curOrient[0];
-	//QR[1] = camOrient[1]*curOrient[1];
-	//QR[2] = camOrient[2]*curOrient[2];
-	//QR[3] = camOrient[3]*-curOrient[3];
-	QR[0] = camOrient[0]*curOrient[0];
-	QR[1] = camOrient[1]*curOrient[1];
-	QR[2] = camOrient[2]*curOrient[2];
-	QR[3] = camOrient[3]*-curOrient[3];
 
-	Q_target[0] = QR[0]*curOrient[0];
-	Q_target[1] = QR[1]*curOrient[1];
-	Q_target[2] = QR[2]*curOrient[2];
-	Q_target[3] = QR[3]*curOrient[3];
-
-	double mag = sqrt(pow(Q_target[0],2)+pow(Q_target[1],2)+pow(Q_target[2],2)+pow(Q_target[3],2));
-	
-	(*waypoint).pose.orientation.x = (Q_target[0]/mag);
-	(*waypoint).pose.orientation.y = (Q_target[1]/mag);
-	(*waypoint).pose.orientation.z = (Q_target[2]/mag);
-	(*waypoint).pose.orientation.w = (Q_target[3]/mag);
-	*/
 	std::cout <<"-----------------------\n";
 	std::cout << "camOrient: " << camOrient[0] << " " << camOrient[1] << " " << camOrient[2] << " " << camOrient[3] << "\n";
-	std::cout << "curOrient: " << curOrient[0] << " " << curOrient[1] << " " << curOrient[2] << " " << curOrient[3] << "\n";
-	//std::cout << "new rotation: " << QR[0] << " " << QR[1] << " " << QR[2] << " " << QR[3] << "\n";
-	
+	std::cout << "result: " << result[0] << " " << result[1] << " " << result[2] << " " << result[3] << "\n";	
 }
 
 void posControl(geometry_msgs::PoseStamped *waypoint, double *curPos, double fX, double fY){
@@ -313,13 +287,13 @@ int main(int argc, char **argv){
 	
 	//waypoint array
 	std::vector<geometry_msgs::PoseStamped> waypoints;
-	waypoints.push_back(waypoint(0,0,2));
-	waypoints.push_back(waypoint(1,1,2));
-	waypoints.push_back(waypoint(2,2,2));
-	waypoints.push_back(waypoint(3,3,2));
+	waypoints.push_back(waypoint(0,0,1));
+	waypoints.push_back(waypoint(1,1,1));
+	waypoints.push_back(waypoint(2,2,1));
+	waypoints.push_back(waypoint(3,3,1));
 
     //send a few setpoints before starting
-    for(int i = 100; ros::ok() && i > 0; --i){
+    for(int i = 10; ros::ok() && i > 0; --i){
         local_pos_pub.publish(waypoints[0]);
         ros::spinOnce();
         rate.sleep();
@@ -384,18 +358,17 @@ int main(int argc, char **argv){
 		
 		// Run guided landing with spline if marker is seen. 
 		}else{
-			targetWaypoint.pose.position.z = 1;
-			posControl(&targetWaypoint, localPos, camPos[0], camPos[1]);
-
-			orintControl(&targetWaypoint, localOrient, camOrient);
 			
-			//cam_rotation(degree, camPos);
-			//altControl(&targetWaypoint, localPos, camPos, set_mode_client);	
-			/*if(startLanding == true){
-				
-				landingThread = std::thread(altitudeControlThread, localPos, camPos, 0.0, set_mode_client, &targetWaypoint);
+			targetWaypoint.pose.position.z = 1;
+			posControl(&targetWaypoint, localPos, camPos[0], camPos[1]);			
+			if(abs(pow(localPos[0]-camPos[0],2)+pow(localPos[1]-camPos[1],2)) < R){
+				orintControl(&targetWaypoint, localOrient, camOrient);
+			}
+
+			if(startLanding == true){
+				//landingThread = std::thread(altitudeControlThread, localPos, camPos, 0.0, set_mode_client, &targetWaypoint);
 				startLanding = false;
-			}*/
+			}
 			local_pos_pub.publish(targetWaypoint);
 		}
 		

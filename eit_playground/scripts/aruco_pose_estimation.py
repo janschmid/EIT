@@ -107,7 +107,7 @@ class ArucoPoseEstimatorNode:
                 self.aruco_pose_msg.pose.orientation.z = q[2]
                 self.aruco_pose_msg.pose.orientation.w = q[3]
                 self.aruco_pos_pub.publish(self.aruco_pose_msg)
-                rospy.loginfo("pos: {0}, orientation: {1}".format(corrected_global_position, eulerAngle))
+                #rospy.loginfo("pos: {0}, orientation: {1}".format(corrected_global_position, eulerAngle))
             else:
                 self.aruco_pose_msg.header.frame_id = "no_aruco_marker"
                 self.aruco_pose_msg.header.stamp = rospy.Time.now()
@@ -116,7 +116,7 @@ class ArucoPoseEstimatorNode:
                 self.aruco_pose_msg.pose.position.z = 0
 
                 self.aruco_pos_pub.publish(self.aruco_pose_msg)
-            self.rate.sleep()
+            #self.rate.sleep()
 
 
     def show_image(self):
