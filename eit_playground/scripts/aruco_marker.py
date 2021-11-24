@@ -3,16 +3,21 @@ import cv2
 from os import path
 from cv2 import aruco
 import numpy as np
+import sys
+from collections import defaultdict
 
 
 class ArucoMarker():
     aruco_dict = None
     test_image_folder_path = None
     aruco_dict_type = None
+    loaded_correction_matrix = defaultdict()
     def __init__(self):
         self.aruco_dict_type = aruco.DICT_ARUCO_ORIGINAL
         self.aruco_dict = aruco.Dictionary_get(self.aruco_dict_type)
         self.test_image_folder_path = path.join(path.dirname(path.realpath(__file__)), "../testImages")
+        self.arucoMarkerPoseBaseDir = path.dirname(path.realpath(__file__))
+        sys.path.insert(0, self.arucoMarkerPoseBaseDir)
         
 
     def create_marker(self):
@@ -102,12 +107,18 @@ class ArucoMarker():
         pose = cv2.aruco.estimatePoseSingleMarkers(corners,marker_length,camMat,distCoeffs)  
         self.visualize_results(frame_markers, corners, ids)
 
+    def load_correction_coefficients(self, markerPostfixName):
+        if(markerPostfixName in self.loaded_correction_matrix):
+            matrixCoeff = self.loaded_correction_matrix[markerPostfixName][0]
+            disCoeff = self.loaded_correction_matrix[markerPostfixName][1]
+        else:
+            matrixCoeff = np.load(path.join(self.arucoMarkerPoseBaseDir, "calibrationFiles", "calibration_matrix_"+markerPostfixName+".npy"))
+            disCoeff = np.load(path.join(self.arucoMarkerPoseBaseDir, "calibrationFiles", "distortion_coefficients_"+markerPostfixName+".npy"))
+            self.loaded_correction_matrix[markerPostfixName] = ([matrixCoeff, disCoeff])
+        return [matrixCoeff, disCoeff]
+    
     def print_distance_to_aruco_marker(self, frame, markerLength, markerPostfixName):
-        import sys
-        arucoMarkerPoseBaseDir = path.dirname(path.realpath(__file__))
-        sys.path.insert(0, arucoMarkerPoseBaseDir)
-        matrixCoeff = np.load(path.join(arucoMarkerPoseBaseDir, "calibrationFiles", "calibration_matrix_"+markerPostfixName+".npy"))
-        disCoeff = np.load(path.join(arucoMarkerPoseBaseDir, "calibrationFiles", "distortion_coefficients_"+markerPostfixName+".npy"))
+        [matrixCoeff, disCoeff] = self.load_correction_coefficients(markerPostfixName)
         frame, rotationVector, translationVector, ids = ArucoMarker.pose_esitmation(frame, self.aruco_dict_type, matrixCoeff, disCoeff, markerLength)
         #for i in range(len(translationVector)):
             #print("Distance to marker {0}: x: {1:.2f}, y: {2:.2f}, z: {3:.2f} ".format(ids[i], 
@@ -127,7 +138,7 @@ class ArucoMarker():
     def tutorial_03_aruco_marker_pose_estimation_camera_feed(self):
         import time
         video = cv2.VideoCapture(0)
-        time.sleep(2.0)
+        # time.sleep(2.0)
 
         while True:
             ret, frame = video.read()
@@ -135,7 +146,7 @@ class ArucoMarker():
             if not ret:
                 break
             
-            output = self.print_distance_to_aruco_marker(frame, 0.1)
+            output,_,_,_= self.print_distance_to_aruco_marker(frame, 0.1, "simulation")
             cv2.imshow('Estimated Pose', output)
 
             key = cv2.waitKey(1) & 0xFF
@@ -146,9 +157,10 @@ class ArucoMarker():
         cv2.destroyAllWindows()
 
 
-#if __name__ == "__main__":
- #   arucoMarker = ArucoMarker()
+if __name__ == "__main__":
+    arucoMarker = ArucoMarker()
     # arucoMarker.tutorial_01_create_and_read_marker()
     # arucoMarker.tutorial_02_estimate_position()
     # arucoMarker.tutorial_03_aruco_marker_pose_estimation()
- #   arucoMarker.tutorial_03_aruco_marker_pose_estimation_camera_feed()
+    arucoMarker.tutorial_03_aruco_marker_pose_estimation_camera_feed()
+    
