@@ -142,7 +142,7 @@ class ArucoMarker():
             eulerAngle = ArucoMarker.rotationVectorToEulerAngles(rotationVector[0][0][0])
             corrected_pos = ArucoMarker.correct_rotation_matrix(translationVector[0][0][0],eulerAngle[0])
             corrected_pos.append(translationVector[0][0][0][2])
-        return eulerAngle, corrected_pos
+        return frame, eulerAngle, corrected_pos
 
 
     def tutorial_03_aruco_marker_pose_estimation_camera_feed(self):
@@ -219,10 +219,10 @@ class ArucoMarker():
 
         return np.array([x, y, z])
 
-if __name__ == "__main__":
-    arucoMarker = ArucoMarker()
-    # arucoMarker.tutorial_01_create_and_read_marker()
-    # arucoMarker.tutorial_02_estimate_position()
-    # arucoMarker.tutorial_03_aruco_marker_pose_estimation()
-    arucoMarker.tutorial_03_aruco_marker_pose_estimation_camera_feed()
+# if __name__ == "__main__":
+#     arucoMarker = ArucoMarker()
+#     # arucoMarker.tutorial_01_create_and_read_marker()
+#     # arucoMarker.tutorial_02_estimate_position()
+#     # arucoMarker.tutorial_03_aruco_marker_pose_estimation()
+#     arucoMarker.tutorial_03_aruco_marker_pose_estimation_camera_feed()
     

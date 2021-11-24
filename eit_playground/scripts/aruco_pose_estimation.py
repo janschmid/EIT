@@ -45,7 +45,7 @@ class ArucoPoseEstimatorNode:
         self.aruco_pose_msg.pose.position.x = 0
         self.aruco_pose_msg.pose.position.y = 0
         self.aruco_pose_msg.pose.position.z = 0
-
+        self.rate = rospy.Rate(10)
         self.current_image = np.zeros([480, 640, 3])
         self.frame = 0
         
@@ -92,11 +92,12 @@ class ArucoPoseEstimatorNode:
             #     self.aruco_pose_msg.pose.orientation.w = q[3]
 
             #     self.aruco_pos_pub.publish(self.aruco_pose_msg)
-            eulerAngle, corrected_global_position = self.arucoMarker.get_global_pos_and_euler_angles(self.current_image.astype('uint8'), self.markerLength, self.markerPostfixName)
+            self.frame, eulerAngle, corrected_global_position = self.arucoMarker.get_global_pos_and_euler_angles(self.current_image.astype('uint8'), self.markerLength, self.markerPostfixName)
 
             if (eulerAngle is not None and
-                corrected_global_position is not None and
-                len(eulerAngle)>0 and len(corrected_global_position)>0):
+                    corrected_global_position is not None and
+                    len(eulerAngle)>0 and len(corrected_global_position)>0):
+                self.aruco_pose_msg.header.frame_id = "aruco_marker"
                 self.aruco_pose_msg.pose.position.x = corrected_global_position[0]
                 self.aruco_pose_msg.pose.position.y = corrected_global_position[1]
                 self.aruco_pose_msg.pose.position.z = corrected_global_position[2]
@@ -106,13 +107,16 @@ class ArucoPoseEstimatorNode:
                 self.aruco_pose_msg.pose.orientation.z = q[2]
                 self.aruco_pose_msg.pose.orientation.w = q[3]
                 self.aruco_pos_pub.publish(self.aruco_pose_msg)
+                rospy.loginfo("pos: {0}, orientation: {1}".format(corrected_global_position, eulerAngle))
             else:
+                self.aruco_pose_msg.header.frame_id = "no_aruco_marker"
                 self.aruco_pose_msg.header.stamp = rospy.Time.now()
                 self.aruco_pose_msg.pose.position.x = 0
                 self.aruco_pose_msg.pose.position.y = 0
                 self.aruco_pose_msg.pose.position.z = 0
 
                 self.aruco_pos_pub.publish(self.aruco_pose_msg)
+            self.rate.sleep()
 
 
     def show_image(self):
