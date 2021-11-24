@@ -251,6 +251,28 @@ void altControl(geometry_msgs::PoseStamped *waypoint, double *curPos, double *ca
 	}
 }
 
+void rotateDrone(double *quat, double *coord){
+	double copy[3];
+	double Mat[3][3];
+	Mat[0][0] = 1-2*(pow(quat[1],2)+pow(quat[2],2));
+	Mat[0][1] = 2*(quat[0]*quat[1]-quat[2]*quat[3]);
+	Mat[0][2] = 2*(quat[0]*quat[2]-quat[1]*quat[3]);
+	Mat[1][0] = 2*(quat[0]*quat[1]+quat[2]*quat[3]);
+	Mat[1][1] = 1-2*(pow(quat[0],2)+pow(quat[2],2));
+	Mat[1][2] = 2*(quat[1]*quat[2]-quat[1]*quat[3]);
+	Mat[2][0] = 2*(quat[0]*quat[2]-quat[1]*quat[3]);
+	Mat[2][1] = 2*(quat[1]*quat[2]+quat[0]*quat[3]);
+	Mat[2][2] = 1-2*(pow(quat[0],1)+pow(quat[1],2));
+	for(int i=0; i<3; i++){
+		for(int j=0; j<3; j++){
+			copy[i] += Mat[i][j]*coord[j];
+		}
+	}
+	coord[0] = copy[0];
+	coord[1] = copy[1];
+	coord[2] = copy[2];
+}
+
 int main(int argc, char **argv){
     ros::init(argc, argv, "offb_node");
     ros::NodeHandle nh;
@@ -358,12 +380,17 @@ int main(int argc, char **argv){
 		
 		// Run guided landing with spline if marker is seen. 
 		}else{
-			
+			double rotation[3];
+			rotation[0] = targetWaypoint.pose.orientation.x;
+			rotation[1] = targetWaypoint.pose.orientation.y;
+			rotation[2] = targetWaypoint.pose.orientation.z;
+			rotation[3] = targetWaypoint.pose.orientation.w;
 			targetWaypoint.pose.position.z = 1;
+			rotateDrone(localPos, rotation);
 			posControl(&targetWaypoint, localPos, camPos[0], camPos[1]);			
-			if(abs(pow(localPos[0]-camPos[0],2)+pow(localPos[1]-camPos[1],2)) < R){
-				orintControl(&targetWaypoint, localOrient, camOrient);
-			}
+			//if(abs(pow(localPos[0]-camPos[0],2)+pow(localPos[1]-camPos[1],2)) < R){
+			orintControl(&targetWaypoint, localOrient, camOrient);
+			//}
 
 			if(startLanding == true){
 				//landingThread = std::thread(altitudeControlThread, localPos, camPos, 0.0, set_mode_client, &targetWaypoint);
