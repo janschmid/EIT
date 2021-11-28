@@ -29,7 +29,7 @@ RUN sudo apt update && sudo apt install astyle build-essential ccache clang clan
 	gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly libgstreamer-plugins-base1.0-dev libgstrtspserver-1.0-dev xvfb -y
 
 RUN pip install --user argparse cerberus empy jinja2 numpy packaging pandas psutil pygments pyros-genmsg pyserial pyulog pyyaml setuptools six toml wheel rosdep
-RUN pip3 install --user --upgrade empy jinja2 numpy packaging pyros-genmsg toml pyyaml pymavlink
+RUN pip3 install --user --upgrade empy jinja2 numpy packaging pyros-genmsg toml pyyaml pymavlink scipy
 
 ENV USER=user
 WORKDIR /home/user
@@ -74,10 +74,11 @@ RUN /bin/bash -c "echo \"alias seit-ws='source /home/user/eit_ws/devel/setup.bas
 RUN /bin/bash -c "echo \"alias peit-ws='cd /home/user/eit_ws/ && seit-ws'\" >> /home/user/.bashrc"
 RUN /bin/bash -c "echo \"alias beit-ws='peit-ws && catkin build'\" >> /home/user/.bashrc"
 
-RUN /bin/bash -c "echo \"alias l_eitpg='seit-ws && roslaunch eit_playground posix.launch vehicle:=sdu_drone_mono_cam_downward env:=aruco_test_3'\" >> /home/user/.bashrc"
-RUN /bin/bash -c "echo \"alias lh_eitpg='seit-ws && roslaunch eit_playground posix.launch vehicle:=sdu_drone_mono_cam_downward env:=aruco_test_3 gui:=false'\" >> /home/user/.bashrc"
+RUN /bin/bash -c "echo \"alias l_eitpg='seit-ws && roslaunch eit_playground posix.launch vehicle:=sdu_drone_mono_cam_downward \" >> /home/user/.bashrc"
+RUN /bin/bash -c "echo \"alias lh_eitpg='seit-ws && roslaunch eit_playground posix.launch vehicle:=sdu_drone_mono_cam_downward gui:=false'\" >> /home/user/.bashrc"
 
 RUN /bin/bash -c "echo \"alias l_mavros='seit-ws && roslaunch mavros px4.launch fcu_url:=\"udp://:14540@127.0.0.1:14557\"'\" >> /home/user/.bashrc"
+RUN /bin/bash -c "echo \"alias l_eit='seit-ws && roslaunch eit_playground eit.launch'\" >> /home/user/.bashrc"
 RUN /bin/bash -c "echo \"alias l_offbnode='seit-ws && rosrun eit_playground offb_node'\" >> /home/user/.bashrc"
 
 # Build SDU drone

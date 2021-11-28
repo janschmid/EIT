@@ -89,25 +89,6 @@ class ArucoMarker():
 
         return frame, rotation, translation, ids
 
-    def tutorial_01_create_and_read_marker(self):
-        arucoMarker = ArucoMarker()
-        filePath = arucoMarker.create_marker()
-        frame_markers, corners, ids = arucoMarker.detect_marker(cv2.imread(filePath))
-        arucoMarker.visualize_results(frame_markers, corners, ids)
-
-    def tutorial_02_estimate_position(self, frame):
-        #https://docs.opencv.org/4.5.4/d5/dae/tutorial_aruco_detection.html
-        frame = cv2.imread(path.join(self.test_image_folder_path, "singleMarkersOriginal.jpg"))
-        frame_markers, corners, ids = self.detect_marker(frame)
-
-        #estimate position
-        camMat = np.array([[14492.753623188406, 0, 1024],[0, 14492.753623188406, 1224],[0, 0, 1]])#camera matrix for f = 50mm with chipsize = 0.00345 mm and 2048x2448px
-        distCoeffs = np.ndarray([0]) #distortion coefficients
-        marker_length = 30.00 #mm
-
-        pose = cv2.aruco.estimatePoseSingleMarkers(corners,marker_length,camMat,distCoeffs)  
-        self.visualize_results(frame_markers, corners, ids)
-
     def load_correction_coefficients(self, markerPostfixName):
         if(markerPostfixName in self.loaded_correction_matrix):
             matrixCoeff = self.loaded_correction_matrix[markerPostfixName][0]

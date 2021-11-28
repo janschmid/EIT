@@ -45,5 +45,101 @@
       <real_time_update_rate>250</real_time_update_rate>
       <magnetic_field>6.0e-6 2.3e-5 -4.2e-5</magnetic_field>
     </physics>
+
+    <!-- Quick Connector -->
+        <model name="QuickConnectBase">
+        <pose>1 1 0 0 0 0</pose>
+	
+        <static>false</static>
+        <link name="base_link">
+            <inertial>
+                <mass>25.0</mass>
+                <inertia>
+                <ixx>1</ixx>
+                <ixy>0</ixy>
+                <ixz>0</ixz>
+                <iyy>1</iyy>
+                <iyz>0</iyz>
+                <izz>1</izz>
+                </inertia>
+            </inertial>
+
+            <collision name='collision'>
+                <pose>0 0 0.125 0 0 0</pose>
+                <geometry>
+                <mesh>
+                    <scale>1 1 1</scale>
+                    <uri>model://quick_connect_base/meshes/base.dae</uri>
+                </mesh>
+                
+                </geometry>
+                <surface>
+                <contact>
+                    <ode>
+                    <min_depth>0.001</min_depth>
+                    <max_vel>0</max_vel>
+                    </ode>
+                </contact>
+                <friction>
+                    <ode/>
+                </friction>
+                </surface>
+            </collision>
+            <visual name='visual'>
+                <pose>0 0 0.125 0 0 0</pose>
+                <geometry>
+                <mesh>
+                    <scale>1 1 1</scale>
+                    <uri>model://quick_connect_base/meshes/base.dae</uri>
+                </mesh>
+                </geometry>
+            </visual>
+            <gravity>1</gravity>
+        </link>
+        <!-- Aruco marker on base -->
+        <link name="aruco_link">
+        <pose>0 0.21 0.13 0 0 0</pose>
+        <visual name='visual'>
+          <cast_shadows>0</cast_shadows>
+          <geometry>
+            <box>
+              <size>0.05 0.05 0</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://aruco_gazebo/aruco_visual_marker_0/materials/scripts</uri>
+              <uri>model://aruco_gazebo/aruco_visual_marker_0/materials/textures</uri>
+              <name>ArucoVisualMarker0/Marker</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+            <diffuse>1 1 1 1</diffuse>
+            <specular>0 0 0 1</specular>
+            <emissive>1 1 1 0</emissive>
+          </material>
+        </visual>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+        </link>
+        <joint name='base_pad_joint' type='fixed'>
+          <child>aruco_link</child>
+          <parent>base_link</parent>
+          <axis>
+            <xyz>0 0 0</xyz>
+            <limit>
+              <lower>0</lower>
+              <upper>0</upper>
+              <effort>0</effort>
+              <velocity>0</velocity>
+            </limit>
+            <dynamics>
+              <spring_reference>0</spring_reference>
+              <spring_stiffness>0</spring_stiffness>
+            </dynamics>
+            <use_parent_model_frame>1</use_parent_model_frame>
+          </axis>
+        </joint>
+    </model>
   </world>
 </sdf>
