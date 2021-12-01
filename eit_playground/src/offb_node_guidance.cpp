@@ -16,7 +16,7 @@ bool mission = true;
 bool startLanding = true;
 bool running = true;
 bool threadSaysLandingEnded = false;
-bool SIMULATION = true;
+bool SIMULATION = false;
 double rotatedCam[3];
 double closeEnough = false;
 tf2::Quaternion arucoQuaternion;
@@ -309,6 +309,7 @@ int main(int argc, char **argv){
 	
 	//waypoint array
 	std::vector<geometry_msgs::PoseStamped> waypoints;
+	waypoints.push_back(waypoint(localPos[0], localPos[1], 1));	//Starting point
 	waypoints.push_back(waypoint(0,0,1));
 	waypoints.push_back(waypoint(1,1,1));
 	waypoints.push_back(waypoint(2,2,1));
@@ -333,6 +334,9 @@ int main(int argc, char **argv){
     mavros_msgs::CommandBool arm_cmd;
     arm_cmd.request.value = true;
 
+	mavros_msgs::CommandBool disarm_cmd;
+	disarm_cmd.request.value = false;
+
     ros::Time last_request = ros::Time::now();
     ros::Time ts_start = ros::Time::now();
 
@@ -341,7 +345,7 @@ int main(int argc, char **argv){
    
 
 	while(ros::ok()){
-        if(SIMULATION == true){
+        /*if(SIMULATION == true){
 			if( current_state.mode != "OFFBOARD" &&
             	(ros::Time::now() - last_request > ros::Duration(1))){
             	ROS_INFO("Trying to enable Offboard...");
@@ -359,7 +363,7 @@ int main(int argc, char **argv){
                 	last_request = ros::Time::now();
             	}
         	}
-		}
+		}*/
 		// Run waypoint mission + landing if no marker is seen.
 		if(mission == true){
 			if(std::abs(localPos[0]-waypoints[i].pose.position.x)+std::abs(localPos[1]-waypoints[i].pose.position.y)+std::abs(localPos[2]-waypoints[i].pose.position.z) < R){
@@ -380,6 +384,7 @@ int main(int argc, char **argv){
 		
 		// Run guided landing with spline if marker is seen. 
 		}else{
+
 			double rotation[3];
 			rotation[0] = targetWaypoint.pose.orientation.x;
 			rotation[1] = targetWaypoint.pose.orientation.y;
@@ -388,9 +393,7 @@ int main(int argc, char **argv){
 			targetWaypoint.pose.position.z = 1;
 			rotateDrone(localPos, rotation);
 			posControl(&targetWaypoint, localPos, camPos[0], camPos[1]);			
-			//if(abs(pow(localPos[0]-camPos[0],2)+pow(localPos[1]-camPos[1],2)) < R){
 			orintControl(&targetWaypoint, localOrient, camOrient);
-			//}
 
 			if(startLanding == true){
 				//landingThread = std::thread(altitudeControlThread, localPos, camPos, 0.0, set_mode_client, &targetWaypoint);
@@ -407,7 +410,9 @@ int main(int argc, char **argv){
 		rate.sleep();
     //End og game-loop
 	}
-    ROS_INFO("Done");
+	//set_mode_client(land_set_mode);
+    arming_client.call(disarm_cmd);
+	ROS_INFO("Done");
 
     return 0;
 }
