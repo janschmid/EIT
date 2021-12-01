@@ -73,7 +73,7 @@ class offb_landing:
 
         self.positionX = 1.0
         self.positionY = 1.0
-        self.positionZ = -1.23
+        self.positionZ = -1.23456
 
         self.rate = rospy.Rate(4.0) # MUST be more then 2Hz
 
@@ -81,9 +81,11 @@ class offb_landing:
         
         self.landing_state = "CENTER_DRONE"
 
-        while self.positionZ == -1.23:
+        while self.positionZ == -1.23456:
             rospy.loginfo("Waiting for position callback")
             rospy.sleep(1)
+
+
         self.set_target_xyz(self.positionX, self.positionY, 1, 3)
         print("Start drone - increase altitude: x: {0}, y: {1}".format(self.positionX, self.positionY))
         #We need to publish position constant to get drone to arm...
@@ -355,13 +357,14 @@ class offb_landing:
                     
                     if (self.align_rotation(1, 3) == False) and descendingHeight < 2:
                         descendingHeight+=0.2
+                        rospy.loginfo("Lost marker, increase height. ")
                     else:
                         descendingHeight-=0.2
                     rospy.sleep(1)
                 rospy.loginfo("Final landing step")
                 self.execute_until_aligned(3, self.move_towards_aruco_marker, 0.01, 0.01)
                 #while not (self.move_towards_aruco_marker, 0.01, 0.01):
-                rospy.loginfo("LANDING")
+                #rospy.loginfo("LANDING")
                 self.set_mode_client(base_mode=0, custom_mode="AUTO.LAND")
 
 
