@@ -338,14 +338,14 @@ class offb_landing:
                 rospy.loginfo("Landing step 3")
 
                 descendingHeight = 0.6
-                while(descendingHeight>0.2):
-                    descendingHeight-=0.2
+                while(descendingHeight>=0.2):
                     self.execute_until_aligned(3, self.move_towards_aruco_marker, 0.03, descendingHeight)
                     self.align_rotation(1, 3)
+                    descendingHeight-=0.2
                     rospy.sleep(1)
                 rospy.loginfo("Final landing step")
                 while(self.move_towards_aruco_marker, 0.01):
-                    #self.set_mode_client(base_mode=0, custom_mode="AUTO.LAND")
+                    self.set_mode_client(base_mode=0, custom_mode="AUTO.LAND")
 
                     # put in target landing here
                     self.landing_target_msg.header.frame_id = "target_landing"
