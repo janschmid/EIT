@@ -32,6 +32,7 @@ from mavros_msgs.msg import LandingTarget
 ###############################################
 from mavros_msgs.srv import CommandBool, SetMode, CommandTOL
 from std_srvs.srv import Empty, EmptyRequest, EmptyResponse
+from gazebo_ros_link_attacher.srv import Attach, AttachRequest, AttachResponse
 
 ###############################################
 # Offboad Control class                       #
@@ -59,6 +60,18 @@ class offb_landing:
         self.arming_client = rospy.ServiceProxy('/mavros/cmd/arming', CommandBool)
         self.takeoff_client = rospy.ServiceProxy('/mavros/cmd/takeoff', CommandTOL)
         self.set_mode_client = rospy.ServiceProxy('/mavros/set_mode', SetMode)
+        self.base_attach_client = rospy.ServiceProxy('/link_attacher_node/attach', Attach)
+
+        self.base_attach_client.wait_for_service()
+        rospy.loginfo("Created ServiceProxy to /link_attacher_node/attach")
+
+        self.att_req = AttachRequest()
+        self.att_req.model_name_1 = "QuickConnectBase"
+        self.att_req.link_name_1 = "base_link"
+        self.att_req.model_name_2 = "sdu_drone_mono_cam_downward"
+        self.att_req.link_name_2 = "base_link"
+
+        #self.base_attach_client.call(self.att_req)
 
         # Init msgs
         self.target = PoseStamped()
@@ -362,11 +375,16 @@ class offb_landing:
                         descendingHeight-=0.2
                     rospy.sleep(1)
                 rospy.loginfo("Final landing step")
-                self.execute_until_aligned(3, self.move_towards_aruco_marker, 0.01, 0.01)
+                self.execute_until_aligned(3, self.move_towards_aruco_marker, 0.015, 0.01)
                 #while not (self.move_towards_aruco_marker, 0.01, 0.01):
                 #rospy.loginfo("LANDING")
                 self.set_mode_client(base_mode=0, custom_mode="AUTO.LAND")
 
+                rospy.sleep(5)
+
+                self.base_attach_client.call(self.att_req)
+
+                self.set_target_xyz(0, 0, 3, 3)
 
                 # ## Target_landing: -----------------------------------
                 # x,y = self.calculate_xy_to_aruco_marker()

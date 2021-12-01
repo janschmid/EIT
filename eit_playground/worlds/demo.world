@@ -1,5 +1,8 @@
 <sdf version='1.7'>
   <world name='default'>
+
+    <plugin name="ros_link_attacher_plugin" filename="libgazebo_ros_link_attacher.so"/>
+
     <light name='sun' type='directional'>
       <cast_shadows>1</cast_shadows>
       <pose>0 0 10 0 -0 0</pose>
@@ -123,14 +126,14 @@
         <static>false</static>
         <link name="base_link">
             <inertial>
-                <mass>25.0</mass>
+                <mass>0.01</mass>
                 <inertia>
-                <ixx>1</ixx>
+                <ixx>0.1</ixx>
                 <ixy>0</ixy>
                 <ixz>0</ixz>
-                <iyy>1</iyy>
+                <iyy>0.1</iyy>
                 <iyz>0</iyz>
-                <izz>1</izz>
+                <izz>0.1</izz>
                 </inertia>
             </inertial>
 
@@ -138,7 +141,7 @@
                 <pose>0 0 0.125 0 0 0</pose>
                 <geometry>
                 <mesh>
-                    <scale>0.7 0.7 0.7</scale>
+                    <scale>1 1 0.5</scale>
                     <uri>model://quick_connect_base/meshes/base.dae</uri>
                 </mesh>
                 
@@ -216,6 +219,5 @@
     <ambient>0.8 0.8 0.8 1.0</ambient>
     <shadows>0</shadows>
   </scene>
-
   </world>
 </sdf>
