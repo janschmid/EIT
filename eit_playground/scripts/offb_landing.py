@@ -23,6 +23,8 @@ from std_msgs.msg import String
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import NavSatFix
 from mavros_msgs.msg import State
+from mavros_msgs.msg import LandingTarget
+
 
 
 ###############################################
@@ -45,6 +47,7 @@ class offb_landing:
         self.landing_succeeded=False
         # Publishers
         self.local_pos_pub = rospy.Publisher('/mavros/setpoint_position/local', PoseStamped, queue_size=10)
+        self.target_landing_pub = rospy.Publisher('/mavros/landing_target/raw', LandingTarget, queue_size=10)
 
         # Subscribers
         self.state_sub = rospy.Subscriber('/mavros/state', State, self.cb_state)
@@ -62,6 +65,9 @@ class offb_landing:
         self.target.pose.position.x = 0
         self.target.pose.position.y = 0
         self.target.pose.position.z = 0
+
+        self.landing_target_msg = LandingTarget()
+        
 
         # Init current position variables
 
@@ -86,8 +92,8 @@ class offb_landing:
         while not(self.set_target_xyz(self.positionX, self.positionY ,2, 0.5)):
             pass
         ## Begin: positioning debug
-        while not(self.set_target_xyz(0,0 ,2, 0.5)):
-            pass
+        #while not(self.set_target_xyz(0,0 ,2, 0.5)):
+        #    pass
         if(rospy.get_param("SIMULATION")):
             self.set_target_orient(Rotation.from_euler('xyz', [0,0,90], degrees=True), 2)
         while not(self.set_target_xyz(1.3,0.7 ,2, 0.5)):
@@ -338,8 +344,25 @@ class offb_landing:
                     self.align_rotation(1, 3)
                     rospy.sleep(1)
                 rospy.loginfo("Final landing step")
-                while(self.move_towards_aruco_marker, 0.01, 0.02):
-                    self.set_mode_client(base_mode=0, custom_mode="AUTO.LAND")
+                while(self.move_towards_aruco_marker, 0.01):
+                    #self.set_mode_client(base_mode=0, custom_mode="AUTO.LAND")
+
+                    # put in target landing here
+                    self.landing_target_msg.header.frame_id = "target_landing"
+                    self.landing_target_msg.target_num = 1
+                    self.landing_target_msg.frame = 2   
+                    self.landing_target_msg.size = [0.05, 0.05]
+                    self.landing_target_msg.distance = self.aruco_posZ
+                    self.landing_target_msg.pose.position.x = self.aruco_posY
+                    self.landing_target_msg.pose.position.y = self.aruco_posX
+                    self.landing_target_msg.pose.position.z = 0
+                    self.landing_target_msg.pose.orientation.x = self.aruco_orientX
+                    self.landing_target_msg.pose.orientation.y = self.aruco_orientY
+                    self.landing_target_msg.pose.orientation.z = self.aruco_orientZ
+                    self.landing_target_msg.pose.orientation.w = self.aruco_orientW
+                    self.landing_target_msg.type = 2
+                    #self.landing_target_msg.position_valid = 1
+                    self.target_landing_pub.publish(self.landing_target_msg)
 
                 self.landing_succeeded=True
                 rospy.loginfo("Landing was successful")
