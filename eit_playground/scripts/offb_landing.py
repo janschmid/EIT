@@ -189,6 +189,7 @@ class offb_landing:
             self.target.header.stamp = rospy.Time.now()
 
             self.local_pos_pub.publish(self.target)
+            self.target_landing_pub.publish(self.landing_target_msg)
             self.rate.sleep()
 
         print(">> Navigation thread has stopped...")
@@ -237,8 +238,8 @@ class offb_landing:
     #     else:
     #         self.set_target_xyz(self.positionX, self.positionY, target_height, 1)
     #         return False
-        
-    def align_rotation(self, delay = 0, tolerance_in_degrees = 5):
+    
+    def calculate_rotation_to_marker(self):
         if not self.aruco_visible:
             return False
         r_aruco = Rotation.from_quat([self.aruco_orientX, self.aruco_orientY, 
@@ -256,6 +257,10 @@ class offb_landing:
         e_drone = r_drone.as_euler('xyz', degrees=True)
         e_target = e_aruco*[1,1,-1]+e_drone
         r_target = Rotation.from_euler('xyz', e_target, degrees=True)
+        return r_target
+
+    def align_rotation(self, delay = 0, tolerance_in_degrees = 5):
+        r_target = self.calculate_rotation_to_marker()
         
 
         # difference = 
@@ -328,7 +333,7 @@ class offb_landing:
                 self.last_mission_state = self.mission_state
                 #switch behaviour
             if(self.aruco_visible==True):
-                rospy.loginfo("Landing step 1")
+                rospy.loginfo("Landing")
                 self.execute_until_aligned(5, self.move_towards_aruco_marker, 0.3, 1.5)
                 self.execute_until_aligned(5, self.align_rotation, 0.5, 10)
 
@@ -338,31 +343,42 @@ class offb_landing:
                 rospy.loginfo("Landing step 3")
 
                 descendingHeight = 0.6
-                while(descendingHeight>0.2):
-                    descendingHeight-=0.2
+                while(descendingHeight>=0.2):
                     self.execute_until_aligned(3, self.move_towards_aruco_marker, 0.03, descendingHeight)
                     self.align_rotation(1, 3)
+                    descendingHeight-=0.2
                     rospy.sleep(1)
                 rospy.loginfo("Final landing step")
-                while(self.move_towards_aruco_marker, 0.01):
-                    #self.set_mode_client(base_mode=0, custom_mode="AUTO.LAND")
+                while(self.move_towards_aruco_marker, 0.01, 0.01):
+                    self.set_mode_client(base_mode=0, custom_mode="AUTO.LAND")
 
-                    # put in target landing here
-                    self.landing_target_msg.header.frame_id = "target_landing"
-                    self.landing_target_msg.target_num = 1
-                    self.landing_target_msg.frame = 2   
-                    self.landing_target_msg.size = [0.05, 0.05]
-                    self.landing_target_msg.distance = self.aruco_posZ
-                    self.landing_target_msg.pose.position.x = self.aruco_posY
-                    self.landing_target_msg.pose.position.y = self.aruco_posX
-                    self.landing_target_msg.pose.position.z = 0
-                    self.landing_target_msg.pose.orientation.x = self.aruco_orientX
-                    self.landing_target_msg.pose.orientation.y = self.aruco_orientY
-                    self.landing_target_msg.pose.orientation.z = self.aruco_orientZ
-                    self.landing_target_msg.pose.orientation.w = self.aruco_orientW
-                    self.landing_target_msg.type = 2
-                    #self.landing_target_msg.position_valid = 1
-                    self.target_landing_pub.publish(self.landing_target_msg)
+
+                ## Target_landing: -----------------------------------
+                # x,y = self.calculate_xy_to_aruco_marker()
+                # aruco_orient = self.calculate_rotation_to_marker()
+                # if(aruco_orient==False):
+                #     continue
+
+                # aruco_orient = aruco_orient.as_quat()
+                
+                # # put in target landing here
+                # self.landing_target_msg.header.frame_id = "target_landing"
+                # self.landing_target_msg.target_num = 1
+                # self.landing_target_msg.frame = 2
+                # self.landing_target_msg.size = [0.05, 0.05]
+                # self.landing_target_msg.distance = self.aruco_posZ
+                # self.landing_target_msg.pose.position.x = x # flipped or not?
+                # self.landing_target_msg.pose.position.y = y
+                # self.landing_target_msg.pose.position.z = 0
+                # self.landing_target_msg.pose.orientation.x = aruco_orient[0]
+                # self.landing_target_msg.pose.orientation.y = aruco_orient[1]
+                # self.landing_target_msg.pose.orientation.z = aruco_orient[2]
+                # self.landing_target_msg.pose.orientation.w = aruco_orient[3]
+                # self.landing_target_msg.type = 2
+
+                ## -----------------------------------------------
+                #self.landing_target_msg.position_valid = 1
+                
 
                 self.landing_succeeded=True
                 rospy.loginfo("Landing was successful")
