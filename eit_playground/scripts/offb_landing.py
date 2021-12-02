@@ -34,7 +34,7 @@ if(rospy.get_param("SIMULATION")):
 ###############################################
 from mavros_msgs.srv import CommandBool, SetMode, CommandTOL
 from std_srvs.srv import Empty, EmptyRequest, EmptyResponse
-from gazebo_ros_link_attacher.srv import Attach, AttachRequest, AttachResponse
+# from gazebo_ros_link_attacher.srv import Attach, AttachRequest, AttachResponse
 
 ###############################################
 # Offboad Control class                       #

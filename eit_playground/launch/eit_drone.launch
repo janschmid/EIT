@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<!-- Main launch file for EIT project - Quick connector -->
+<launch>
+    <param name="SIMULATION" type="boolean" value="false"/>
+    <arg name="SIMULATION" default="false"/>"
+    
+    <!-- <node name="video_publisher" pkg="eit_playground" type="video_publisher.py" if="$(eval arg('SIMULATION') == false)"/> -->
+    <node name="aruco_pose_estimation" pkg="eit_playground" type="aruco_pose_estimation.py"/>
+    <node name="offb_landing" pkg="eit_playground" type="offb_landing.py"/> 
+</launch>
