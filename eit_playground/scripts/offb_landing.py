@@ -23,9 +23,11 @@ from std_msgs.msg import String
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import NavSatFix
 from mavros_msgs.msg import State
-from mavros_msgs.msg import LandingTarget
 
+if(rospy.get_param("SIMULATION")):
+    from sim_attach_detach import SimAttachDetach
 
+# from mavros_msgs.msg import LandingTarget
 
 ###############################################
 # ROS Service messages                        #
@@ -48,7 +50,7 @@ class offb_landing:
         self.landing_succeeded=False
         # Publishers
         self.local_pos_pub = rospy.Publisher('/mavros/setpoint_position/local', PoseStamped, queue_size=10)
-        self.target_landing_pub = rospy.Publisher('/mavros/landing_target/raw', LandingTarget, queue_size=10)
+        # self.target_landing_pub = rospy.Publisher('/mavros/landing_target/raw', LandingTarget, queue_size=10)
 
         # Subscribers
         self.state_sub = rospy.Subscriber('/mavros/state', State, self.cb_state)
@@ -60,18 +62,18 @@ class offb_landing:
         self.arming_client = rospy.ServiceProxy('/mavros/cmd/arming', CommandBool)
         self.takeoff_client = rospy.ServiceProxy('/mavros/cmd/takeoff', CommandTOL)
         self.set_mode_client = rospy.ServiceProxy('/mavros/set_mode', SetMode)
-        self.base_attach_client = rospy.ServiceProxy('/link_attacher_node/attach', Attach)
-        self.base_detach_client = rospy.ServiceProxy('/link_attacher_node/detach', Attach)
+        # self.base_attach_client = rospy.ServiceProxy('/link_attacher_node/attach', Attach)
+        # self.base_detach_client = rospy.ServiceProxy('/link_attacher_node/detach', Attach)
 
-        self.base_attach_client.wait_for_service()
-        self.base_detach_client.wait_for_service()
-        rospy.loginfo("Created ServiceProxy to /link_attacher_node/attach and /link_attacher_node/detach")
+        # self.base_attach_client.wait_for_service()
+        # self.base_detach_client.wait_for_service()
+        # rospy.loginfo("Created ServiceProxy to /link_attacher_node/attach and /link_attacher_node/detach")
 
-        self.att_req = AttachRequest()
-        self.att_req.model_name_1 = "QuickConnectBase"
-        self.att_req.link_name_1 = "base_link"
-        self.att_req.model_name_2 = "sdu_drone_mono_cam_downward"
-        self.att_req.link_name_2 = "base_link"
+        # self.att_req = AttachRequest()
+        # self.att_req.model_name_1 = "QuickConnectBase"
+        # self.att_req.link_name_1 = "base_link"
+        # self.att_req.model_name_2 = "sdu_drone_mono_cam_downward"
+        # self.att_req.link_name_2 = "base_link"
 
         #self.base_attach_client.call(self.att_req)
 
@@ -81,7 +83,7 @@ class offb_landing:
         self.target.pose.position.y = 0
         self.target.pose.position.z = 0
 
-        self.landing_target_msg = LandingTarget()
+        # self.landing_target_msg = LandingTarget()
         
 
         # Init current position variables
@@ -96,34 +98,42 @@ class offb_landing:
         
         self.landing_state = "CENTER_DRONE"
 
+        # Wait for drone position to be published
         while self.positionZ == -1.23456:
             rospy.loginfo("Waiting for position callback")
             rospy.sleep(1)
 
-
-        self.set_target_xyz(self.positionX, self.positionY, 1, 3)
+        # set safety waypoint at current position at 1m height
+        self.set_target_xyz(self.positionX, self.positionY, 1, 0.5)
         print("Start drone - increase altitude: x: {0}, y: {1}".format(self.positionX, self.positionY))
-        #We need to publish position constant to get drone to arm...
+
+        # start navigation thread which constantly publishes the current target waypoint      
         self.t_run = threading.Thread(target=self.navigate)
         self.t_run.start()
-        self.switch2offboard(Empty())
-        
-        rospy.sleep(8)
+
+        # Only switch to offboard automatically when in simulation. otherwise for pilot to activate it
+        if(rospy.get_param("SIMULATION")):
+            self.switch2offboard(Empty())
+            self.connector = SimAttachDetach()
+            self.connector.detach()
+        else:
+            while self.current_state.mode != "OFFBOARD":
+                rospy.loginfo("!! Waiting for Offboard !!")
+                rospy.sleep(1)
+
+        # Takeoff to 2m at current position
         while not(self.set_target_xyz(self.positionX, self.positionY ,2, 0.5)):
             pass
-        ## Begin: positioning debug
-        #while not(self.set_target_xyz(0,0 ,2, 0.5)):
-        #    pass
+        
+        # Introduce some rotation to demostrate the alignment working
         if(rospy.get_param("SIMULATION")):
             self.set_target_orient(Rotation.from_euler('xyz', [0,0,90], degrees=True), 2)
+        
+        # Fly in the direction of the marker
         while not(self.set_target_xyz(1.3,0.7 ,2, 0.5)):
             pass
 
-        ## End: positioning debug
-
-        ### Begin: orientation debug
-        # self.execute_until_aligned(self.move_towards_xy_point, 0.2, 5)
-        ### End: orientation debug
+        # start the landing thread once estimated position of marker is reached  
         self.t_state_observer.start()
         rospy.spin()
 
@@ -209,7 +219,6 @@ class offb_landing:
             self.target.header.stamp = rospy.Time.now()
 
             self.local_pos_pub.publish(self.target)
-            self.target_landing_pub.publish(self.landing_target_msg)
             self.rate.sleep()
 
         print(">> Navigation thread has stopped...")
@@ -242,7 +251,7 @@ class offb_landing:
         self.set_target_xyz(x,y,z, 0.5)
         
         distance_to_marker = self.calculate_2d_distance(self.aruco_posX, self.aruco_posY)
-        rospy.loginfo("moveXY, distance: {0}".format(distance_to_marker))
+        #rospy.loginfo("moveXY, distance: {0}".format(distance_to_marker))
         if(heightTolerance is None or self.aruco_orientZ-height<heightTolerance):
             if(distance_to_marker<radiusOfAcceptance):
                 return True
@@ -344,7 +353,7 @@ class offb_landing:
 
 
     def landing_controller(self):
-        rospy.loginfo("mission state observer started")
+        rospy.loginfo("Begin landing sequence")
         self.last_mission_state = -1
         while not rospy.is_shutdown():
             if(self.landing_succeeded == True):
@@ -357,7 +366,7 @@ class offb_landing:
                 self.last_mission_state = self.mission_state
                 #switch behaviour
             if(self.aruco_visible==True):
-                rospy.loginfo("Landing")
+                rospy.loginfo("Landing step 1")
                 self.execute_until_aligned(5, self.move_towards_aruco_marker, 0.3, 1.5)
                 self.execute_until_aligned(5, self.align_rotation, 0.5, 10)
 
@@ -368,7 +377,7 @@ class offb_landing:
 
                 descendingHeight = 0.6
                 while(descendingHeight>=0.2):
-                    self.execute_until_aligned(3, self.move_towards_aruco_marker, 0.03, descendingHeight)
+                    self.execute_until_aligned(3, self.move_towards_aruco_marker, 0.05, descendingHeight)
                     
                     if (self.align_rotation(1, 3) == False) and descendingHeight < 2:
                         descendingHeight+=0.2
@@ -381,7 +390,9 @@ class offb_landing:
                 #while not (self.move_towards_aruco_marker, 0.01, 0.01):
                 #rospy.loginfo("LANDING")
                 self.set_mode_client(base_mode=0, custom_mode="AUTO.LAND")
-
+                self.landing_succeeded=True
+                rospy.loginfo("Landing was successful.")
+                # self.connector.attach()
                 # rospy.sleep(1)
 
                 # self.base_attach_client.call(self.att_req)
@@ -419,7 +430,7 @@ class offb_landing:
                 
 
                 #self.landing_succeeded=True
-                #rospy.loginfo("Landing was successful")q
+                #rospy.loginfo("Landing was successful")
 
             #     # self.last_mission_state = self.mission_state
             
