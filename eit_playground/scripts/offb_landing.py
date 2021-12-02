@@ -61,9 +61,11 @@ class offb_landing:
         self.takeoff_client = rospy.ServiceProxy('/mavros/cmd/takeoff', CommandTOL)
         self.set_mode_client = rospy.ServiceProxy('/mavros/set_mode', SetMode)
         self.base_attach_client = rospy.ServiceProxy('/link_attacher_node/attach', Attach)
+        self.base_detach_client = rospy.ServiceProxy('/link_attacher_node/detach', Attach)
 
         self.base_attach_client.wait_for_service()
-        rospy.loginfo("Created ServiceProxy to /link_attacher_node/attach")
+        self.base_detach_client.wait_for_service()
+        rospy.loginfo("Created ServiceProxy to /link_attacher_node/attach and /link_attacher_node/detach")
 
         self.att_req = AttachRequest()
         self.att_req.model_name_1 = "QuickConnectBase"
@@ -380,11 +382,11 @@ class offb_landing:
                 #rospy.loginfo("LANDING")
                 self.set_mode_client(base_mode=0, custom_mode="AUTO.LAND")
 
-                rospy.sleep(5)
+                # rospy.sleep(1)
 
-                self.base_attach_client.call(self.att_req)
+                # self.base_attach_client.call(self.att_req)
 
-                self.set_target_xyz(0, 0, 3, 3)
+                # self.set_target_xyz(0, 0, 3, 3)
 
                 # ## Target_landing: -----------------------------------
                 # x,y = self.calculate_xy_to_aruco_marker()
