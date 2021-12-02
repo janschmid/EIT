@@ -32,7 +32,7 @@ from mavros_msgs.msg import LandingTarget
 ###############################################
 from mavros_msgs.srv import CommandBool, SetMode, CommandTOL
 from std_srvs.srv import Empty, EmptyRequest, EmptyResponse
-from gazebo_ros_link_attacher.srv import Attach, AttachRequest, AttachResponse
+# from gazebo_ros_link_attacher.srv import Attach, AttachRequest, AttachResponse
 
 ###############################################
 # Offboad Control class                       #
@@ -60,18 +60,18 @@ class offb_landing:
         self.arming_client = rospy.ServiceProxy('/mavros/cmd/arming', CommandBool)
         self.takeoff_client = rospy.ServiceProxy('/mavros/cmd/takeoff', CommandTOL)
         self.set_mode_client = rospy.ServiceProxy('/mavros/set_mode', SetMode)
-        self.base_attach_client = rospy.ServiceProxy('/link_attacher_node/attach', Attach)
-        self.base_detach_client = rospy.ServiceProxy('/link_attacher_node/detach', Attach)
+        # self.base_attach_client = rospy.ServiceProxy('/link_attacher_node/attach', Attach)
+        # self.base_detach_client = rospy.ServiceProxy('/link_attacher_node/detach', Attach)
 
-        self.base_attach_client.wait_for_service()
-        self.base_detach_client.wait_for_service()
-        rospy.loginfo("Created ServiceProxy to /link_attacher_node/attach and /link_attacher_node/detach")
+        # self.base_attach_client.wait_for_service()
+        # self.base_detach_client.wait_for_service()
+        # rospy.loginfo("Created ServiceProxy to /link_attacher_node/attach and /link_attacher_node/detach")
 
-        self.att_req = AttachRequest()
-        self.att_req.model_name_1 = "QuickConnectBase"
-        self.att_req.link_name_1 = "base_link"
-        self.att_req.model_name_2 = "sdu_drone_mono_cam_downward"
-        self.att_req.link_name_2 = "base_link"
+        # self.att_req = AttachRequest()
+        # self.att_req.model_name_1 = "QuickConnectBase"
+        # self.att_req.link_name_1 = "base_link"
+        # self.att_req.model_name_2 = "sdu_drone_mono_cam_downward"
+        # self.att_req.link_name_2 = "base_link"
 
         #self.base_attach_client.call(self.att_req)
 
