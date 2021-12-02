@@ -6,5 +6,7 @@
     
     <node name="video_publisher" pkg="eit_playground" type="video_publisher.py" if="$(eval arg('SIMULATION') == false)"/>
     <node name="aruco_pose_estimation" pkg="eit_playground" type="aruco_pose_estimation.py"/>
+    <node name="relay_mocap_grp5" pkg="eit_playground" type="relay_mocap_grp5.py" if="$(eval arg('SIMULATION') == true)"/>
+
     <!-- <node name="offb_landing" pkg="eit_playground" type="offb_landing.py"/>  -->
 </launch>
