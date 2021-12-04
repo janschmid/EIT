@@ -16,7 +16,7 @@ Px4 SITL simulation environment, keep in mind to run seit-ws in advanced
 - l_mavros
     - `seit-ws && roslaunch mavros px4.launch fcu_url:="udp://:14540@127.0.0.1:14557"`
 - l_offbnode
-    - `seit-ws && rosrun eit_playground offb_node`
+    - `seit-ws && roslaunch eit_playground eit.launch`
 
 optional vehicle parameters are:
 - sdu_drone_mono_cam
