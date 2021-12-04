@@ -94,7 +94,7 @@ class offb_landing:
 
         self.rate = rospy.Rate(4.0) # MUST be more then 2Hz
 
-        self.t_state_observer = threading.Thread(target =self.landing_controller)
+        self.t_state_observer = threading.Thread(target =self.landing_controller, daemon=True)
         
         self.landing_state = "CENTER_DRONE"
 
@@ -108,7 +108,7 @@ class offb_landing:
         print("Start drone - increase altitude: x: {0}, y: {1}".format(self.positionX, self.positionY))
 
         # start navigation thread which constantly publishes the current target waypoint      
-        self.t_run = threading.Thread(target=self.navigate)
+        self.t_run = threading.Thread(target=self.navigate, daemon=True)
         self.t_run.start()
 
         # Only switch to offboard automatically when in simulation. otherwise for pilot to activate it
@@ -232,8 +232,8 @@ class offb_landing:
         ay = self.aruco_posY
         aruco_x_rotated = ax*cos(drone_rot_radian)+ay*sin(drone_rot_radian)
         aruco_y_rotated = -ax*sin(drone_rot_radian)+ay*cos(drone_rot_radian)
-        x = self.positionX+aruco_y_rotated
-        y = self.positionY+aruco_x_rotated
+        x = self.positionX-aruco_x_rotated
+        y = self.positionY+aruco_y_rotated
         return x,y
 
 
