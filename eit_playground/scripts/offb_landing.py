@@ -131,12 +131,26 @@ class offb_landing:
             rospy.sleep(1)
             rospy.loginfo("Waiting for auto disarm!")
         self.connect(True)
+        rospy.sleep(1)
+        self.arming_sequence()
+        while not(self.set_target_xyz(0, 0, 2, 0, 0.2)):
+            pass
+        while not(self.set_target_xyz(5, 0, 1, 0, 0.2)):
+            pass
+        while not(self.set_target_xyz(5, 0, 0.2, 0, 0.2)):
+            pass
+        self.set_mode_client(base_mode=0, custom_mode="AUTO.LAND")
+        
+        while self.current_state.armed:
+            rospy.sleep(1)
+            rospy.loginfo("Waiting for auto disarm!")
+
+        self.connect(False)
 
         self.arming_sequence()
-        while not(self.set_target_xyz(0, 0, 4, 0, 0.2)):
+
+        while not(self.set_target_xyz(0, 0, 2, 0, 0.2)):
             pass
-        rospy.loginfo("Waypoint reached!")
-        self.connect(False)
         rospy.spin()
 
     """
@@ -312,13 +326,13 @@ class offb_landing:
 
     def arming_sequence(self):
         if(rospy.get_param("SIMULATION")):
-            self.switch2offboard(Empty())
+            self.switch2offboard()
         else:
             while self.current_state.mode != "OFFBOARD":
                 rospy.loginfo("!! Waiting for Offboard !!")
                 rospy.sleep(1)
 
-    def switch2offboard(self,r):
+    def switch2offboard(self):
         print(">> Starting OFFBOARD mode")
 
         last_request = rospy.get_rostime()
@@ -329,12 +343,12 @@ class offb_landing:
                 self.set_mode_client(base_mode=0, custom_mode="OFFBOARD")
                 last_request = now
 
-        tmp = Empty()
-        self.arm(tmp)
+        #tmp = Empty()
+        self.arm()
 
         return {}
 
-    def arm(self,r):
+    def arm(self):
         print(">> Arming...")
         last_request = rospy.get_rostime()
         while not self.current_state.armed:
