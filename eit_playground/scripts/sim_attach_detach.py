@@ -28,6 +28,8 @@ class SimAttachDetach:
 
     def attach(self):
         self.base_attach_client.call(self.att_req)
+        rospy.loginfo("Simulation drone connected to base")
 
     def detach(self):
         self.base_detach_client.call(self.att_req)
+        rospy.loginfo("Simulation drone disconnected from base")

@@ -26,6 +26,9 @@ from mavros_msgs.msg import State
 
 if(rospy.get_param("SIMULATION")):
     from sim_attach_detach import SimAttachDetach
+else:
+    from connector_actuation import ConnectorActuation
+
 
 # from mavros_msgs.msg import LandingTarget
 
@@ -50,41 +53,23 @@ class offb_landing:
         self.landing_succeeded=False
         # Publishers
         self.local_pos_pub = rospy.Publisher('/mavros/setpoint_position/local', PoseStamped, queue_size=10)
-        # self.target_landing_pub = rospy.Publisher('/mavros/landing_target/raw', LandingTarget, queue_size=10)
 
         # Subscribers
         self.state_sub = rospy.Subscriber('/mavros/state', State, self.cb_state)
         self.sub_target = rospy.Subscriber('/mavros/offbctrl/target', PoseStamped, self.cb_target)
         self.sub_pose = rospy.Subscriber('/mavros/local_position/pose', PoseStamped, self.cb_position)
-        self.sub_aruco_pose = rospy.Subscriber("aruco_pose", PoseStamped, self.aruco_pose)
+        self.sub_aruco_pose = rospy.Subscriber("/aruco_pose", PoseStamped, self.aruco_pose)
 
         # Services
         self.arming_client = rospy.ServiceProxy('/mavros/cmd/arming', CommandBool)
         self.takeoff_client = rospy.ServiceProxy('/mavros/cmd/takeoff', CommandTOL)
         self.set_mode_client = rospy.ServiceProxy('/mavros/set_mode', SetMode)
-        # self.base_attach_client = rospy.ServiceProxy('/link_attacher_node/attach', Attach)
-        # self.base_detach_client = rospy.ServiceProxy('/link_attacher_node/detach', Attach)
-
-        # self.base_attach_client.wait_for_service()
-        # self.base_detach_client.wait_for_service()
-        # rospy.loginfo("Created ServiceProxy to /link_attacher_node/attach and /link_attacher_node/detach")
-
-        # self.att_req = AttachRequest()
-        # self.att_req.model_name_1 = "QuickConnectBase"
-        # self.att_req.link_name_1 = "base_link"
-        # self.att_req.model_name_2 = "sdu_drone_mono_cam_downward"
-        # self.att_req.link_name_2 = "base_link"
-
-        #self.base_attach_client.call(self.att_req)
 
         # Init msgs
         self.target = PoseStamped()
         self.target.pose.position.x = 0
         self.target.pose.position.y = 0
-        self.target.pose.position.z = 0
-
-        # self.landing_target_msg = LandingTarget()
-        
+        self.target.pose.position.z = 0        
 
         # Init current position variables
 
@@ -113,13 +98,13 @@ class offb_landing:
 
         # Only switch to offboard automatically when in simulation. otherwise for pilot to activate it
         if(rospy.get_param("SIMULATION")):
-            self.switch2offboard(Empty())
-            self.connector = SimAttachDetach()
-            self.connector.detach()
+            self.sim_connector = SimAttachDetach()
+            self.sim_connector.detach()
         else:
-            while self.current_state.mode != "OFFBOARD":
-                rospy.loginfo("!! Waiting for Offboard !!")
-                rospy.sleep(1)
+            self.gpio_connector = ConnectorActuation()
+            self.gpio_connector.open_connector()
+
+        self.arming_sequence()
 
         # Takeoff to 2m at current position
         while not(self.set_target_xyz(self.positionX, self.positionY ,2, 0.5)):
@@ -135,6 +120,23 @@ class offb_landing:
 
         # start the landing thread once estimated position of marker is reached  
         self.t_state_observer.start()
+
+        # wait until landing was successful
+        while not self.landing_succeeded:
+            pass
+        self.t_state_observer.join()
+        rospy.loginfo("Eagle has landed")
+
+        while self.current_state.armed:
+            rospy.sleep(1)
+            rospy.loginfo("Waiting for auto disarm!")
+        self.connect(True)
+
+        self.arming_sequence()
+        while not(self.set_target_xyz(0, 0, 4, 0, 0.2)):
+            pass
+        rospy.loginfo("Waypoint reached!")
+        self.connect(False)
         rospy.spin()
 
     """
@@ -192,9 +194,9 @@ class offb_landing:
         self.target.pose.position.z = z
 
         time.sleep(delay)
-        if(sqrt(pow(x-self.target.pose.position.x, 2)
-                +pow(y-self.target.pose.position.y, 2)
-                +pow(z-self.target.pose.position.z, 2))<radius_of_acceptance):
+        if(sqrt(pow(self.positionX-self.target.pose.position.x, 2)
+                +pow(self.positionY-self.target.pose.position.y, 2)
+                +pow(self.positionZ-self.target.pose.position.z, 2))<radius_of_acceptance):
             return True
         else:
             return False
@@ -308,6 +310,14 @@ class offb_landing:
     def calculate_2d_distance(self, x, y):
         return sqrt(x*x  + y*y)
 
+    def arming_sequence(self):
+        if(rospy.get_param("SIMULATION")):
+            self.switch2offboard(Empty())
+        else:
+            while self.current_state.mode != "OFFBOARD":
+                rospy.loginfo("!! Waiting for Offboard !!")
+                rospy.sleep(1)
+
     def switch2offboard(self,r):
         print(">> Starting OFFBOARD mode")
 
@@ -355,10 +365,10 @@ class offb_landing:
     def landing_controller(self):
         rospy.loginfo("Begin landing sequence")
         self.last_mission_state = -1
-        while not rospy.is_shutdown():
-            if(self.landing_succeeded == True):
-                rospy.sleep(1)
-                continue
+        while not self.landing_succeeded:
+            # if(self.landing_succeeded == True):
+            #     rospy.sleep(1)
+            #     continue
             # self.align_rotation()
             # print(">>Start landing...")
             if(self.last_mission_state==-1):
@@ -392,51 +402,31 @@ class offb_landing:
                 self.set_mode_client(base_mode=0, custom_mode="AUTO.LAND")
                 self.landing_succeeded=True
                 rospy.loginfo("Landing was successful.")
+
+
                 # self.connector.attach()
                 # rospy.sleep(1)
-
-                # self.base_attach_client.call(self.att_req)
-
                 # self.set_target_xyz(0, 0, 3, 3)
-
-                # ## Target_landing: -----------------------------------
-                # x,y = self.calculate_xy_to_aruco_marker()
-                # aruco_orient = self.calculate_rotation_to_marker()
-                # if(aruco_orient==False):
-                #     continue
-
-                # aruco_orient = aruco_orient.as_quat()
                 
-                # # put in target landing here
-                # self.landing_target_msg.header.frame_id = "target_landing"
-                # self.landing_target_msg.target_num = 1
-                # #self.landing_target_msg.frame = 2
-                # self.landing_target_msg.size = [0.05, 0.05]
-                # self.landing_target_msg.distance = self.aruco_posZ
-                # self.landing_target_msg.pose.position.x = x # flipped or not?
-                # self.landing_target_msg.pose.position.y = y
-                # self.landing_target_msg.pose.position.z = 0
-                # self.landing_target_msg.pose.orientation.x = aruco_orient[0]
-                # self.landing_target_msg.pose.orientation.y = aruco_orient[1]
-                # self.landing_target_msg.pose.orientation.z = aruco_orient[2]
-                # self.landing_target_msg.pose.orientation.w = aruco_orient[3]
-                # self.landing_target_msg.type = 2
-
-                # self.set_mode_client(base_mode=0, custom_mode="AUTO.PRECLAND")
-
-
-                ## -----------------------------------------------
-                #self.landing_target_msg.position_valid = 1
-                
-
-                #self.landing_succeeded=True
                 #rospy.loginfo("Landing was successful")
 
             #     # self.last_mission_state = self.mission_state
             
-            self.rate.sleep()
-        print(">>mission state observer thread has stopped, landing disabled....")
-        self.set_state("STOPPED")
+            #self.rate.sleep()
+        #print(">>mission state observer thread has stopped, landing disabled....")
+        #self.set_state("STOPPED")
+
+    def connect(self, close):
+        if close:
+            if rospy.get_param("SIMULATION"):
+                self.sim_connector.attach()
+            else:
+                self.gpio_connector.close_connector()
+        else:
+            if rospy.get_param("SIMULATION"):
+                self.sim_connector.detach()
+            else:
+                self.gpio_connector.open_connector()
 
 if __name__ == '__main__':
     offb_landing()
