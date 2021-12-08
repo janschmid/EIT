@@ -34,18 +34,13 @@ class ArucoPoseEstimatorNode:
 
         rospy.init_node('aruco_pose_estimator')
 
-        self.cam_sub = rospy.Subscriber('/mono_cam/image_raw', Image, self.cb_image)
-        self.target_point_sub = rospy.Subscriber('/mono_cam/image_raw', Image, self.cb_image)
-
-        self.aruco_pos_pub = rospy.Publisher('/aruco_pose', PoseStamped, queue_size=10)
-
-        self.bridge = CvBridge()
+        self.aruco_pos_pub = rospy.Publisher('/aruco_pose', PoseStamped, queue_size=1)
 
         self.aruco_pose_msg = PoseStamped()
         self.aruco_pose_msg.pose.position.x = 0
         self.aruco_pose_msg.pose.position.y = 0
         self.aruco_pose_msg.pose.position.z = 0
-        self.rate = rospy.Rate(10)
+        self.rate = rospy.Rate(20)
         self.current_image = np.zeros([480, 640, 3])
         self.frame = 0
         
@@ -58,9 +53,9 @@ class ArucoPoseEstimatorNode:
             self.markerLength = 0.0495
         rospy.loginfo("Using {0} calibration, marker length is : {1}".format(self.markerPostfixName, self.markerLength))
         #self.ids = 
-
-        self.t_show_image = threading.Thread(target=self.show_image)
-        self.t_show_image.start()
+        if(rospy.get_param("SIMULATION")==True):
+            self.t_show_image = threading.Thread(target=self.show_image)
+            self.t_show_image.start()
 
         self.arucoMarker = ArucoMarker()
 
@@ -69,30 +64,19 @@ class ArucoPoseEstimatorNode:
 
         rospy.spin()
 
-    def cb_image(self, image):
-        self.current_image = self.bridge.imgmsg_to_cv2(image, desired_encoding='passthrough')
-
     def estimate_pose(self):
-        while not rospy.is_shutdown():
-            # self.frame, self.rotationVector, self.translationVector, self.ids = self.arucoMarker.tutorial_03_aruco_marker_pose_estimation(
-            #     self.current_image.astype('uint8'), self.markerLength, self.markerPostfixName)
-            # #for x in range(len(self.ids)):
-            # #print(self.ids)
-            # if self.ids is not None: 
-            #     #print(self.translationVector[0][0][0][0])
-            #     q = quaternion_from_euler(self.rotationVector[0][0][0][0], self.rotationVector[0][0][0][1], self.rotationVector[0][0][0][2])
-            #     #print(q)
-            #     self.aruco_pose_msg.header.stamp = rospy.Time.now()
-            #     self.aruco_pose_msg.pose.position.x = self.translationVector[0][0][0][0]
-            #     self.aruco_pose_msg.pose.position.y = self.translationVector[0][0][0][1]
-            #     self.aruco_pose_msg.pose.position.z = self.translationVector[0][0][0][2]
-            #     self.aruco_pose_msg.pose.orientation.x = q[0]
-            #     self.aruco_pose_msg.pose.orientation.y = q[1]
-            #     self.aruco_pose_msg.pose.orientation.z = q[2]
-            #     self.aruco_pose_msg.pose.orientation.w = q[3]
+        cap = cv2.VideoCapture('/dev/video0', cv2.CAP_V4L)
 
-            #     self.aruco_pos_pub.publish(self.aruco_pose_msg)
-            self.frame, eulerAngle, corrected_global_position = self.arucoMarker.get_global_pos_and_euler_angles(self.current_image.astype('uint8'), self.markerLength, self.markerPostfixName)
+        # set dimensions
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 360)
+        while not rospy.is_shutdown():
+            ret, current_image = cap.read()
+            if(ret == False):
+                rospy.loginfo("Could not access /dev/video0")
+                time.sleep(5)
+                continue
+            self.frame, eulerAngle, corrected_global_position = self.arucoMarker.get_global_pos_and_euler_angles(current_image.astype('uint8'), self.markerLength, self.markerPostfixName)
 
             if (eulerAngle is not None and
                     corrected_global_position is not None and
@@ -116,17 +100,16 @@ class ArucoPoseEstimatorNode:
                 self.aruco_pose_msg.pose.position.z = 0
 
                 self.aruco_pos_pub.publish(self.aruco_pose_msg)
-            #self.rate.sleep()
+            self.rate.sleep()
 
 
     def show_image(self):
-        if(rospy.get_param("SIMULATION")==True):
-            while not rospy.is_shutdown():
-                    #print("Shape: ", np.shape(self.frame))
-                    cv2.circle(self.frame,(320,240), 5, (0,0,255), -1)
-                    cv2.imshow('Drone camera', self.frame)
-                    cv2.waitKey(1) 
-            cv2.destroyAllWindows() 
+        while not rospy.is_shutdown():
+                #print("Shape: ", np.shape(self.frame))
+                cv2.circle(self.frame,(320,240), 5, (0,0,255), -1)
+                cv2.imshow('Drone camera', self.frame)
+                cv2.waitKey(1) 
+        cv2.destroyAllWindows() 
 
 if __name__ == '__main__':
     SPC = ArucoPoseEstimatorNode()
