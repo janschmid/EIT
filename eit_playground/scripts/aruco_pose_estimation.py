@@ -48,7 +48,7 @@ class ArucoPoseEstimatorNode:
             self.markerPostfixName = "simulation"
             self.markerLength=0.05
         else:
-            self.markerPostfixName = "piCam"
+            self.markerPostfixName = "piCam-360p"
             # set to the size of the real marker 
             self.markerLength = 0.0495
         rospy.loginfo("Using {0} calibration, marker length is : {1}".format(self.markerPostfixName, self.markerLength))
