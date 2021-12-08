@@ -104,6 +104,8 @@ class offb_landing:
             self.gpio_connector = ConnectorActuation()
             self.gpio_connector.open_connector()
 
+    def marker_landing_connect_waypoint_disconnect_sequence(self):
+
         self.arming_sequence()
 
         # Takeoff to 2m at current position
@@ -114,6 +116,9 @@ class offb_landing:
         if(rospy.get_param("SIMULATION")):
             self.set_target_orient(Rotation.from_euler('xyz', [0,0,90], degrees=True), 2)
         
+
+        #### Flying sequence: ####
+         
         # Fly in the direction of the marker
         while not(self.set_target_xyz(1.3,0.7 ,2, 0.5)):
             pass
@@ -127,27 +132,41 @@ class offb_landing:
         self.t_state_observer.join()
         rospy.loginfo("Eagle has landed")
 
+        # Wait for drone to disarm
         while self.current_state.armed:
             rospy.sleep(1)
             rospy.loginfo("Waiting for auto disarm!")
+
+        # Close the connector
         self.connect(True)
         rospy.sleep(1)
+
+        # Arm drone again
         self.arming_sequence()
+
+        # Fly waypoint mission
         while not(self.set_target_xyz(0, 0, 2, 0, 0.2)):
             pass
         while not(self.set_target_xyz(5, 0, 1, 0, 0.2)):
             pass
         while not(self.set_target_xyz(5, 0, 0.2, 0, 0.2)):
             pass
+
+        # Land
         self.set_mode_client(base_mode=0, custom_mode="AUTO.LAND")
         
+        # Wait for drone to disarm
         while self.current_state.armed:
             rospy.sleep(1)
             rospy.loginfo("Waiting for auto disarm!")
 
+        # Disconnect payload
         self.connect(False)
 
         self.arming_sequence()
+
+        while not(self.set_target_xyz(self.positionX, self.positionY, 2, 0.3)):
+            pass
 
         while not(self.set_target_xyz(0, 0, 2, 0, 0.2)):
             pass
@@ -443,4 +462,6 @@ class offb_landing:
                 self.gpio_connector.open_connector()
 
 if __name__ == '__main__':
-    offb_landing()
+    o = offb_landing()
+    o.marker_landing_connect_waypoint_disconnect_sequence()
+    #o.connect(True)
