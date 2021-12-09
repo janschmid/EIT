@@ -145,11 +145,13 @@ class offb_landing:
         self.arming_sequence()
 
         # Fly waypoint mission
+        while not(self.set_target_xyz(self.positionX, self.positionY ,2, 0.5)):
+            pass
         while not(self.set_target_xyz(0, 0, 2, 0, 0.2)):
             pass
         while not(self.set_target_xyz(-2, 0, 1, 0, 0.2)):
             pass
-        while not(self.set_target_xyz(-2, 0, 0.15, 0, 0.2)):
+        while not(self.set_target_xyz(-2, 0, 0.2, 0, 0.2)):
             pass
 
         # Land
