@@ -463,5 +463,5 @@ class offb_landing:
 
 if __name__ == '__main__':
     o = offb_landing()
-    o.marker_landing_connect_waypoint_disconnect_sequence()
-    #o.connect(True)
+    #o.marker_landing_connect_waypoint_disconnect_sequence()
+    o.connect(False)
