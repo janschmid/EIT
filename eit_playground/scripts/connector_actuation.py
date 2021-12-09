@@ -22,7 +22,7 @@ class ConnectorActuation:
     def open_connector(self):
         GPIO.output(self.gpio_pin, GPIO.HIGH)
         print("open")
-        rospy.sleep(1)
+        rospy.sleep(3)
         GPIO.output(self.gpio_pin, GPIO.LOW)
         print("closed")
         rospy.loginfo("Real-world connector opened")
