@@ -147,9 +147,9 @@ class offb_landing:
         # Fly waypoint mission
         while not(self.set_target_xyz(0, 0, 2, 0, 0.2)):
             pass
-        while not(self.set_target_xyz(5, 0, 1, 0, 0.2)):
+        while not(self.set_target_xyz(-2, 0, 1, 0, 0.2)):
             pass
-        while not(self.set_target_xyz(5, 0, 0.2, 0, 0.2)):
+        while not(self.set_target_xyz(-2, 0, 0.15, 0, 0.2)):
             pass
 
         # Land
