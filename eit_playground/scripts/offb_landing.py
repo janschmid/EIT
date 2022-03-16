@@ -48,17 +48,18 @@ class offb_landing:
     mission_state = 0
     aruco_visible = False
     def __init__(self, *args):
+        print("Start initializing offb_landing")
         self.current_state = State()
         rospy.init_node('offb_landing')
         self.landing_succeeded=False
         # Publishers
-        self.local_pos_pub = rospy.Publisher('/mavros/setpoint_position/local', PoseStamped, queue_size=10)
+        self.local_pos_pub = rospy.Publisher('/mavros/setpoint_position/local', PoseStamped, queue_size=1)
 
         # Subscribers
-        self.state_sub = rospy.Subscriber('/mavros/state', State, self.cb_state)
-        self.sub_target = rospy.Subscriber('/mavros/offbctrl/target', PoseStamped, self.cb_target)
-        self.sub_pose = rospy.Subscriber('/mavros/local_position/pose', PoseStamped, self.cb_position)
-        self.sub_aruco_pose = rospy.Subscriber("/aruco_pose", PoseStamped, self.aruco_pose)
+        self.state_sub = rospy.Subscriber('/mavros/state', State, self.cb_state, queue_size=1)
+        self.sub_target = rospy.Subscriber('/mavros/offbctrl/target', PoseStamped, self.cb_target, queue_size=1)
+        self.sub_pose = rospy.Subscriber('/mavros/local_position/pose', PoseStamped, self.cb_position, queue_size=1)
+        self.sub_aruco_pose = rospy.Subscriber("/aruco_pose", PoseStamped, self.aruco_pose, queue_size=1)
 
         # Services
         self.arming_client = rospy.ServiceProxy('/mavros/cmd/arming', CommandBool)
@@ -77,7 +78,7 @@ class offb_landing:
         self.positionY = 1.0
         self.positionZ = -1.23456
 
-        self.rate = rospy.Rate(4.0) # MUST be more then 2Hz
+        self.rate = rospy.Rate(10.0) # MUST be more then 2Hz
 
         self.t_state_observer = threading.Thread(target =self.landing_controller, daemon=True)
         
@@ -265,12 +266,16 @@ class offb_landing:
         drone_rot_radian = Rotation.from_quat([self.orientX, self.orientY, 
             self.orientZ, self.orientW]).as_euler('xyz', degrees=False)[2]
         #x and y are flipped...
-        ax = self.aruco_posX
-        ay = self.aruco_posY
+        ax = self.aruco_posY/2
+        ay = self.aruco_posX/2
         aruco_x_rotated = ax*cos(drone_rot_radian)+ay*sin(drone_rot_radian)
         aruco_y_rotated = -ax*sin(drone_rot_radian)+ay*cos(drone_rot_radian)
-        x = self.positionX-aruco_x_rotated
-        y = self.positionY+aruco_y_rotated
+        x = self.positionX
+        y = self.positionY
+        #fix for optitrack, dont' do in sim
+        x = self.positionX - aruco_x_rotated
+        y = self.positionY-aruco_y_rotated
+        rospy.loginfo("moveXY, arucoX: {0}, , currentX: {2}, tX: {4}, arucoY: {1}, currentY: {3}, tY: {5}, rotation: {6}".format(aruco_x_rotated, aruco_y_rotated, self.positionX, self.positionY, x, y, drone_rot_radian))
         return x,y
 
 
@@ -285,10 +290,10 @@ class offb_landing:
         if(height is not None):
             z=height
 
+        
         self.set_target_xyz(x,y,z, 0.5)
         
         distance_to_marker = self.calculate_2d_distance(self.aruco_posX, self.aruco_posY)
-        #rospy.loginfo("moveXY, distance: {0}".format(distance_to_marker))
         if(heightTolerance is None or self.aruco_orientZ-height<heightTolerance):
             if(distance_to_marker<radiusOfAcceptance):
                 return True
@@ -386,7 +391,7 @@ class offb_landing:
     """
     Pass function with boolean return value 
     """
-    def execute_until_aligned(self, min_hits, function,*args):
+    def execute_until_aligned(self, min_hits, sleepTime, function,*args):
         hits = 0
         rospy.loginfo("Execute: {0}".format(function.__name__))
         while(hits<min_hits):
@@ -394,6 +399,7 @@ class offb_landing:
                 hits += 1
             else:
                 hits = 0
+            self.rate.sleep()
         # rospy.loginfo(self.landing_state)
 
 
@@ -412,26 +418,27 @@ class offb_landing:
                 #switch behaviour
             if(self.aruco_visible==True):
                 rospy.loginfo("Landing step 1")
-                self.execute_until_aligned(5, self.move_towards_aruco_marker, 0.3, 1.5)
-                self.execute_until_aligned(5, self.align_rotation, 0.5, 10)
+                self.execute_until_aligned(2, self.move_towards_aruco_marker, 0.3, 1.5)
+                # self.execute_until_aligned(5, self.align_rotation, 0.5, 10)
 
                 rospy.loginfo("Landing step 2")
-                self.execute_until_aligned(5, self.move_towards_aruco_marker, 0.1, 1)
-                self.execute_until_aligned(3, self.align_rotation, 1, 5)
+                self.execute_until_aligned(2, self.move_towards_aruco_marker, 0.3, 1)
+                # self.execute_until_aligned(3, self.align_rotation, 1, 5)
                 rospy.loginfo("Landing step 3")
 
                 descendingHeight = 0.6
                 while(descendingHeight>=0.2):
-                    self.execute_until_aligned(3, self.move_towards_aruco_marker, 0.05, descendingHeight)
+                    self.execute_until_aligned(2, self.move_towards_aruco_marker, 0.3, descendingHeight)
                     
-                    if (self.align_rotation(1, 3) == False) and descendingHeight < 2:
-                        descendingHeight+=0.2
-                        rospy.loginfo("Lost marker, increase height. ")
-                    else:
-                        descendingHeight-=0.2
+                    # if (self.align_rotation(1, 3) == False) and descendingHeight < 2:
+                    #     descendingHeight+=0.2
+                    #     rospy.loginfo("Lost marker, increase height. ")
+                    # else:
+                    #     descendingHeight-=0.2
+                    descendingHeight-=0.2
                     rospy.sleep(1)
                 rospy.loginfo("Final landing step")
-                self.execute_until_aligned(3, self.move_towards_aruco_marker, 0.015, 0.01)
+                self.execute_until_aligned(1,self.move_towards_aruco_marker, 0.09, 0.01)
                 #while not (self.move_towards_aruco_marker, 0.01, 0.01):
                 #rospy.loginfo("LANDING")
                 self.set_mode_client(base_mode=0, custom_mode="AUTO.LAND")
@@ -451,17 +458,13 @@ class offb_landing:
         #print(">>mission state observer thread has stopped, landing disabled....")
         #self.set_state("STOPPED")
 
-    # def connect(self, close):
-    #     if close:
-    #         if rospy.get_param("SIMULATION"):
-    #             self.sim_connector.attach()
-    #         else:
-    #             self.gpio_connector.close_connector()
-    #     else:
-    #         if rospy.get_param("SIMULATION"):
-    #             self.sim_connector.detach()
-    #         else:
-    #             self.gpio_connector.open_connector()
+    def connect(self, close):
+        if close:
+            if rospy.get_param("SIMULATION"):
+                self.sim_connector.attach()
+        else:
+            if rospy.get_param("SIMULATION"):
+                self.sim_connector.detach()
 
 if __name__ == '__main__':
     o = offb_landing()
