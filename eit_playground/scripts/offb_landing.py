@@ -26,7 +26,8 @@ from mavros_msgs.msg import State
 
 if(rospy.get_param("SIMULATION")):
     from sim_attach_detach import SimAttachDetach
-
+#else:
+    #from connector_actuation import ConnectorActuation
 
 
 # from mavros_msgs.msg import LandingTarget
@@ -100,6 +101,9 @@ class offb_landing:
         if(rospy.get_param("SIMULATION")):
             self.sim_connector = SimAttachDetach()
             self.sim_connector.detach()
+        # else:
+        #     self.gpio_connector = ConnectorActuation()
+        #     self.gpio_connector.open_connector()
 
     def marker_landing_connect_waypoint_disconnect_sequence(self):
 
@@ -135,8 +139,8 @@ class offb_landing:
             rospy.loginfo("Waiting for auto disarm!")
 
         # Close the connector
-        self.connect(True)
-        rospy.sleep(1)
+        #self.connect(True)
+        #rospy.sleep(1)
 
         # Arm drone again
         self.arming_sequence()
@@ -160,7 +164,7 @@ class offb_landing:
             rospy.loginfo("Waiting for auto disarm!")
 
         # Disconnect payload
-        self.connect(False)
+        #self.connect(False)
 
         self.arming_sequence()
 
@@ -465,4 +469,4 @@ class offb_landing:
 if __name__ == '__main__':
     o = offb_landing()
     o.marker_landing_connect_waypoint_disconnect_sequence()
-    #o.connect(True)
+    #o.connect(False)
